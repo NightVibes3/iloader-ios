@@ -2,6 +2,8 @@ import Foundation
 
 import SwiftUI
 
+import UIKit
+
 import UniformTypeIdentifiers
 
 struct PairingView: View {
@@ -129,7 +131,56 @@ struct PairingView: View {
     }
 
     var scanButton: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 12) {
+            // Device Info Section (from MobileGestalt)
+            if MobileGestaltService.shared.isAvailable {
+                GlassCard {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "iphone")
+                                .foregroundColor(.blue)
+                            Text("This Device")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            Spacer()
+                        }
+
+                        if let udid = MobileGestaltService.shared.udid {
+                            deviceInfoRow("UDID", value: String(udid.prefix(8)) + "...")
+                        }
+                        if let serial = MobileGestaltService.shared.serialNumber {
+                            deviceInfoRow("Serial", value: serial)
+                        }
+                        if let productType = MobileGestaltService.shared.productType {
+                            deviceInfoRow("Model", value: productType)
+                        }
+                        if let version = MobileGestaltService.shared.productVersion {
+                            deviceInfoRow("iOS", value: version)
+                        }
+                    }
+                }
+                .padding(.horizontal)
+            }
+
+            // Export Pairing File Button
+            Button(action: exportPairingFile) {
+                HStack {
+                    Image(systemName: "square.and.arrow.up")
+                    Text("Export Pairing File")
+                }
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    LinearGradient(
+                        colors: [.purple, .blue], startPoint: .leading, endPoint: .trailing)
+                )
+                .cornerRadius(12)
+                .foregroundColor(.white)
+            }
+            .padding(.horizontal)
+
+            // Scan Button
             Button(action: {
                 Task { await appState.pairingService.scanForDevices() }
             }) {
@@ -150,6 +201,43 @@ struct PairingView: View {
                     .foregroundColor(.blue)
             }
             .padding(.top, 4)
+        }
+    }
+
+    func deviceInfoRow(_ label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.gray)
+            Spacer()
+            Text(value)
+                .font(.caption.monospaced())
+                .foregroundColor(.white)
+        }
+    }
+
+    func exportPairingFile() {
+        Task {
+            do {
+                let fileURL = try LockdownService.shared.exportPairingFile()
+
+                // Present share sheet
+                await MainActor.run {
+                    let activityVC = UIActivityViewController(
+                        activityItems: [fileURL],
+                        applicationActivities: nil
+                    )
+
+                    if let windowScene = UIApplication.shared.connectedScenes.first
+                        as? UIWindowScene,
+                        let rootVC = windowScene.windows.first?.rootViewController
+                    {
+                        rootVC.present(activityVC, animated: true)
+                    }
+                }
+            } catch {
+                print("Export failed: \(error.localizedDescription)")
+            }
         }
     }
 }

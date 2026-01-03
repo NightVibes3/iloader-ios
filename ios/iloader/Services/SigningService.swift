@@ -451,12 +451,7 @@ class SigningService {
     private func extractIPA(ipaURL: URL, to directory: URL) throws -> URL {
         let payloadDir = directory.appendingPathComponent("Payload")
 
-        // Unzip IPA
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
-        process.arguments = ["-q", ipaURL.path, "-d", directory.path]
-
-        // For iOS, use ZIPFoundation or native unzipping
+        // iOS-native unzipping
         try unzipFile(at: ipaURL, to: directory)
 
         // Find .app directory

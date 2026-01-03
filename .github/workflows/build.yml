@@ -20,16 +20,10 @@ jobs:
       - name: Build Archive
         run: |
           cd ios
-          # Verify project existence
-          if [ -d "iloader.xcodeproj" ]; then
-              echo "Project file found."
-          else
-              echo "Project file missing! Generating..."
-              swift package generate-xcodeproj --enable-code-coverage
-          fi
+          # FORCE REMOVE faulty/incompatible project file to use Package.swift directly
+          rm -rf iloader.xcodeproj
 
           xcodebuild archive \
-            -project iloader.xcodeproj \
             -scheme iloader \
             -destination "generic/platform=iOS" \
             -archivePath ../iloader.xcarchive \

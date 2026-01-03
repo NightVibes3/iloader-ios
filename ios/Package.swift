@@ -1,4 +1,5 @@
 // swift-tools-version: 5.9
+
 import PackageDescription
 
 let package = Package(
@@ -7,7 +8,7 @@ let package = Package(
         .iOS(.v17)
     ],
     products: [
-        .library(name: "iloader", targets: ["iloader"])
+        .executable(name: "iloader", targets: ["iloader"])
     ],
     targets: [
         .target(

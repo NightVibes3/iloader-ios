@@ -4,16 +4,16 @@ struct AppleIDView: View {
     @ObservedObject var appState = AppState.shared
     @StateObject var accountService = AccountService.shared
     @Environment(\.dismiss) var dismiss
-    
+
     @State private var email = ""
     @State private var password = ""
     @State private var showingError = false
     @State private var errorMessage = ""
-    
+
     var body: some View {
         ZStack {
             Color(hex: "0f172a").ignoresSafeArea()
-            
+
             VStack(spacing: 24) {
                 // Header
                 HStack {
@@ -33,7 +33,7 @@ struct AppleIDView: View {
                     }
                 }
                 .padding(.top, 40)
-                
+
                 // Form
                 VStack(spacing: 16) {
                     GlassCard {
@@ -48,9 +48,9 @@ struct AppleIDView: View {
                                     .textContentType(.emailAddress)
                                     .autocapitalization(.none)
                             }
-                            
+
                             Divider().background(.white.opacity(0.1))
-                            
+
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("PASSWORD")
                                     .font(.caption2.bold())
@@ -62,13 +62,13 @@ struct AppleIDView: View {
                             }
                         }
                     }
-                    
+
                     VStack(alignment: .leading, spacing: 8) {
                         Text("ANISETTE SERVER")
                             .font(.caption2.bold())
                             .foregroundColor(.gray)
                             .padding(.leading, 4)
-                        
+
                         GlassCard {
                             HStack {
                                 Text("Current:")
@@ -82,16 +82,16 @@ struct AppleIDView: View {
                         }
                     }
                 }
-                
+
                 if showingError {
                     Text(errorMessage)
                         .font(.caption)
                         .foregroundColor(.red)
                         .padding(.horizontal)
                 }
-                
+
                 Spacer()
-                
+
                 Button(action: performLogin) {
                     HStack {
                         if accountService.isLoggingIn {
@@ -105,22 +105,26 @@ struct AppleIDView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(email.isEmpty || password.isEmpty ? Color.gray.opacity(0.3) : Color.blue)
+                    .background(
+                        email.isEmpty || password.isEmpty ? Color.gray.opacity(0.3) : Color.blue
+                    )
                     .cornerRadius(16)
                     .shadow(color: .blue.opacity(0.3), radius: 10, y: 5)
                 }
                 .disabled(email.isEmpty || password.isEmpty || accountService.isLoggingIn)
-                
-                Text("Your credentials are sent directly to Apple (or your chosen anisette server) and are never stored on iloader servers.")
-                    .font(.caption2)
-                    .foregroundColor(.gray.opacity(0.6))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 20)
+
+                Text(
+                    "Your credentials are sent directly to Apple (or your chosen anisette server) and are never stored on iloader servers."
+                )
+                .font(.caption2)
+                .foregroundColor(.gray.opacity(0.6))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 20)
             }
             .padding(24)
         }
     }
-    
+
     private func performLogin() {
         Task {
             let result = await accountService.login(
@@ -129,7 +133,7 @@ struct AppleIDView: View {
                 anisetteServer: appState.anisetteServer,
                 save: true
             )
-            
+
             switch result {
             case .success(let email):
                 appState.loggedInAs = email
@@ -141,13 +145,12 @@ struct AppleIDView: View {
         }
     }
 }
-
 struct AppleIDView_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
             Color.black.ignoresSafeArea()
             GlassCard {
-                AppleIDView(loggedInAs: .constant("nab138@example.com"))
+                AppleIDView()
             }
             .padding()
         }

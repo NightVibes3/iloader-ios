@@ -29,22 +29,22 @@
 /* Begin PBXFileReference section */
 		57E7072A2D27E672002AF7D5 /* iloader.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = iloader.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		57E7072D2D27E672002AF7D5 /* iloaderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iloaderApp.swift; sourceTree = "<group>"; };
-		57E707312D27E69C002AF7D5 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/MainView.swift; sourceTree = "<group>"; };
-		57B1B1012D28300100000001 /* GlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components/GlassCard.swift; sourceTree = "<group>"; };
-		57B1B1022D28300200000001 /* OperationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components/OperationView.swift; sourceTree = "<group>"; };
-		57B1B1032D28300300000001 /* WebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components/WebView.swift; sourceTree = "<group>"; };
-		57B1B1042D28300400000001 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/Models.swift; sourceTree = "<group>"; };
-		57B1B1052D28300500000001 /* AccountService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/AccountService.swift; sourceTree = "<group>"; };
-		57B1B1062D28300600000001 /* AppIdService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/AppIdService.swift; sourceTree = "<group>"; };
-		57B1B1072D28300700000001 /* CertificateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/CertificateService.swift; sourceTree = "<group>"; };
-		57B1B1082D28300800000001 /* SideloadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/SideloadService.swift; sourceTree = "<group>"; };
-		57B1B1092D28300900000001 /* AppIdsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/AppIdsView.swift; sourceTree = "<group>"; };
-		57B1B10A2D28300A00000001 /* AppleIDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/AppleIDView.swift; sourceTree = "<group>"; };
-		57B1B10B2D28300B00000001 /* CertificatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/CertificatesView.swift; sourceTree = "<group>"; };
-		57B1B10C2D28300C00000001 /* DeviceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/DeviceView.swift; sourceTree = "<group>"; };
-		57B1B10D2D28300D00000001 /* InstallerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/InstallerView.swift; sourceTree = "<group>"; };
-		57B1B10F2D28300F00000001 /* PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/PairingView.swift; sourceTree = "<group>"; };
-		57B1B1102D28301000000001 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/SettingsView.swift; sourceTree = "<group>"; };
+		57E707312D27E69C002AF7D5 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		57B1B1012D28300100000001 /* GlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassCard.swift; sourceTree = "<group>"; };
+		57B1B1022D28300200000001 /* OperationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationView.swift; sourceTree = "<group>"; };
+		57B1B1032D28300300000001 /* WebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebView.swift; sourceTree = "<group>"; };
+		57B1B1042D28300400000001 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		57B1B1052D28300500000001 /* AccountService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountService.swift; sourceTree = "<group>"; };
+		57B1B1062D28300600000001 /* AppIdService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIdService.swift; sourceTree = "<group>"; };
+		57B1B1072D28300700000001 /* CertificateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CertificateService.swift; sourceTree = "<group>"; };
+		57B1B1082D28300800000001 /* SideloadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SideloadService.swift; sourceTree = "<group>"; };
+		57B1B1092D28300900000001 /* AppIdsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIdsView.swift; sourceTree = "<group>"; };
+		57B1B10A2D28300A00000001 /* AppleIDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIDView.swift; sourceTree = "<group>"; };
+		57B1B10B2D28300B00000001 /* CertificatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CertificatesView.swift; sourceTree = "<group>"; };
+		57B1B10C2D28300C00000001 /* DeviceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceView.swift; sourceTree = "<group>"; };
+		57B1B10D2D28300D00000001 /* InstallerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstallerView.swift; sourceTree = "<group>"; };
+		57B1B10F2D28300F00000001 /* PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingView.swift; sourceTree = "<group>"; };
+		57B1B1102D28301000000001 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */

@@ -9,12 +9,42 @@
 /* Begin PBXBuildFile section */
 		57E7072E2D27E672002AF7D5 /* iloaderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E7072D2D27E672002AF7D5 /* iloaderApp.swift */; };
 		57E707322D27E69C002AF7D5 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E707312D27E69C002AF7D5 /* MainView.swift */; };
+		57B1B1012D28300100000000 /* GlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B1012D28300100000001 /* GlassCard.swift */; };
+		57B1B1022D28300200000000 /* OperationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B1022D28300200000001 /* OperationView.swift */; };
+		57B1B1032D28300300000000 /* WebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B1032D28300300000001 /* WebView.swift */; };
+		57B1B1042D28300400000000 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B1042D28300400000001 /* Models.swift */; };
+		57B1B1052D28300500000000 /* AccountService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B1052D28300500000001 /* AccountService.swift */; };
+		57B1B1062D28300600000000 /* AppIdService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B1062D28300600000001 /* AppIdService.swift */; };
+		57B1B1072D28300700000000 /* CertificateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B1072D28300700000001 /* CertificateService.swift */; };
+		57B1B1082D28300800000000 /* SideloadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B1082D28300800000001 /* SideloadService.swift */; };
+		57B1B1092D28300900000000 /* AppIdsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B1092D28300900000001 /* AppIdsView.swift */; };
+		57B1B10A2D28300A00000000 /* AppleIDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B10A2D28300A00000001 /* AppleIDView.swift */; };
+		57B1B10B2D28300B00000000 /* CertificatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B10B2D28300B00000001 /* CertificatesView.swift */; };
+		57B1B10C2D28300C00000000 /* DeviceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B10C2D28300C00000001 /* DeviceView.swift */; };
+		57B1B10D2D28300D00000000 /* InstallerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B10D2D28300D00000001 /* InstallerView.swift */; };
+		57B1B10F2D28300F00000000 /* PairingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B10F2D28300F00000001 /* PairingView.swift */; };
+		57B1B1102D28301000000000 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B1102D28301000000001 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		57E7072A2D27E672002AF7D5 /* iloader.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = iloader.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		57E7072D2D27E672002AF7D5 /* iloaderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iloaderApp.swift; sourceTree = "<group>"; };
-		57E707312D27E69C002AF7D5 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		57E707312D27E69C002AF7D5 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/MainView.swift; sourceTree = "<group>"; };
+		57B1B1012D28300100000001 /* GlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components/GlassCard.swift; sourceTree = "<group>"; };
+		57B1B1022D28300200000001 /* OperationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components/OperationView.swift; sourceTree = "<group>"; };
+		57B1B1032D28300300000001 /* WebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components/WebView.swift; sourceTree = "<group>"; };
+		57B1B1042D28300400000001 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/Models.swift; sourceTree = "<group>"; };
+		57B1B1052D28300500000001 /* AccountService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/AccountService.swift; sourceTree = "<group>"; };
+		57B1B1062D28300600000001 /* AppIdService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/AppIdService.swift; sourceTree = "<group>"; };
+		57B1B1072D28300700000001 /* CertificateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/CertificateService.swift; sourceTree = "<group>"; };
+		57B1B1082D28300800000001 /* SideloadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/SideloadService.swift; sourceTree = "<group>"; };
+		57B1B1092D28300900000001 /* AppIdsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/AppIdsView.swift; sourceTree = "<group>"; };
+		57B1B10A2D28300A00000001 /* AppleIDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/AppleIDView.swift; sourceTree = "<group>"; };
+		57B1B10B2D28300B00000001 /* CertificatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/CertificatesView.swift; sourceTree = "<group>"; };
+		57B1B10C2D28300C00000001 /* DeviceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/DeviceView.swift; sourceTree = "<group>"; };
+		57B1B10D2D28300D00000001 /* InstallerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/InstallerView.swift; sourceTree = "<group>"; };
+		57B1B10F2D28300F00000001 /* PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/PairingView.swift; sourceTree = "<group>"; };
+		57B1B1102D28301000000001 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,9 +78,56 @@
 			isa = PBXGroup;
 			children = (
 				57E7072D2D27E672002AF7D5 /* iloaderApp.swift */,
-				57E707312D27E69C002AF7D5 /* MainView.swift */,
+				57B1B3012D28300100000000 /* Components */,
+				57B1B3022D28300200000000 /* Models */,
+				57B1B3032D28300300000000 /* Services */,
+				57B1B3042D28300400000000 /* Views */,
 			);
 			path = iloader;
+			sourceTree = "<group>";
+		};
+		57B1B3012D28300100000000 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				57B1B1012D28300100000001 /* GlassCard.swift */,
+				57B1B1022D28300200000001 /* OperationView.swift */,
+				57B1B1032D28300300000001 /* WebView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		57B1B3022D28300200000000 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				57B1B1042D28300400000001 /* Models.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		57B1B3032D28300300000000 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				57B1B1052D28300500000001 /* AccountService.swift */,
+				57B1B1062D28300600000001 /* AppIdService.swift */,
+				57B1B1072D28300700000001 /* CertificateService.swift */,
+				57B1B1082D28300800000001 /* SideloadService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		57B1B3042D28300400000000 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				57B1B1092D28300900000001 /* AppIdsView.swift */,
+				57B1B10A2D28300A00000001 /* AppleIDView.swift */,
+				57B1B10B2D28300B00000001 /* CertificatesView.swift */,
+				57B1B10C2D28300C00000001 /* DeviceView.swift */,
+				57B1B10D2D28300D00000001 /* InstallerView.swift */,
+				57E707312D27E69C002AF7D5 /* MainView.swift */,
+				57B1B10F2D28300F00000001 /* PairingView.swift */,
+				57B1B1102D28301000000001 /* SettingsView.swift */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -123,6 +200,21 @@
 			files = (
 				57E7072E2D27E672002AF7D5 /* iloaderApp.swift in Sources */,
 				57E707322D27E69C002AF7D5 /* MainView.swift in Sources */,
+				57B1B1012D28300100000000 /* GlassCard.swift in Sources */,
+				57B1B1022D28300200000000 /* OperationView.swift in Sources */,
+				57B1B1032D28300300000000 /* WebView.swift in Sources */,
+				57B1B1042D28300400000000 /* Models.swift in Sources */,
+				57B1B1052D28300500000000 /* AccountService.swift in Sources */,
+				57B1B1062D28300600000000 /* AppIdService.swift in Sources */,
+				57B1B1072D28300700000000 /* CertificateService.swift in Sources */,
+				57B1B1082D28300800000000 /* SideloadService.swift in Sources */,
+				57B1B1092D28300900000000 /* AppIdsView.swift in Sources */,
+				57B1B10A2D28300A00000000 /* AppleIDView.swift in Sources */,
+				57B1B10B2D28300B00000000 /* CertificatesView.swift in Sources */,
+				57B1B10C2D28300C00000000 /* DeviceView.swift in Sources */,
+				57B1B10D2D28300D00000000 /* InstallerView.swift in Sources */,
+				57B1B10F2D28300F00000000 /* PairingView.swift in Sources */,
+				57B1B1102D28301000000000 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

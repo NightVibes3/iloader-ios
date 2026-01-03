@@ -38,6 +38,12 @@ class CertificateService: ObservableObject {
 
     func loadCertificates() async {
         guard let state = state else { return }
+
+        guard let user = state.loggedInAs else {
+            state.certificates = []
+            return
+        }
+
         state.isLoading = true
         state.statusMessage = "Fetching certificates from Apple..."
 
@@ -46,8 +52,11 @@ class CertificateService: ObservableObject {
 
         let mockCerts = [
             Certificate(
-                id: "L8A2B3C4D5", name: "iPhone Developer: User", serialNumber: "57B6C8D9E0",
-                machineName: "MacBook Pro", expirationDate: Date().addingTimeInterval(7 * 24 * 3600)
+                id: UUID().uuidString.prefix(10).description,
+                name: "iPhone Developer: \(user)",
+                serialNumber: UUID().uuidString.prefix(10).description,
+                machineName: "MacBook Pro",
+                expirationDate: Date().addingTimeInterval(7 * 24 * 3600)
             )
         ]
 

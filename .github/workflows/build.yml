@@ -8,40 +8,57 @@ on:
 jobs:
   build:
     name: Build IPA
-    runs-on: macos-latest
+    runs-on: macos-14
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Select Xcode
+        run: sudo xcode-select -switch /Applications/Xcode_15.4.app
+
       - name: Build Archive
         run: |
           cd ios
+          # Verify project existence
+          if [ -d "iloader.xcodeproj" ]; then
+              echo "Project file found."
+          else
+              echo "Project file missing! Generating..."
+              swift package generate-xcodeproj --enable-code-coverage
+          fi
+
           xcodebuild archive \
             -project iloader.xcodeproj \
             -scheme iloader \
             -destination "generic/platform=iOS" \
             -archivePath ../iloader.xcarchive \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
 
       - name: Export IPA (Unsigned)
         run: |
+          # Create Payload directory
           mkdir -p Payload
-          # Find the .app bundle (Swift Packages sometimes place them in different subdirs)
+
+          # Find the .app bundle
           APP_PATH=$(find iloader.xcarchive -name "*.app" | head -n 1)
+
           if [ -z "$APP_PATH" ]; then
             echo "Error: No .app bundle found in archive!"
-            # Fallback check for frameworks if it's being built as any other product
-            APP_PATH=$(find iloader.xcarchive -name "*.framework" | head -n 1)
-          fi
-
-          if [ -n "$APP_PATH" ]; then
-            cp -r "$APP_PATH" Payload/
-            zip -r iloader.ipa Payload
-          else
-            echo "CRITICAL ERROR: Build produced no app or framework."
+            # Debug listing
+            find iloader.xcarchive
             exit 1
           fi
+
+          echo "Found app at: $APP_PATH"
+
+          # Copy to Payload
+          cp -r "$APP_PATH" Payload/
+
+          # Zip into IPA
+          zip -r iloader.ipa Payload
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

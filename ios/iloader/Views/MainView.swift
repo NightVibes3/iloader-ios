@@ -3,29 +3,35 @@ import SwiftUI
 struct MainView: View {
     @ObservedObject var appState = AppState.shared
     @StateObject var sideloadService = SideloadService.shared
-    
+
     @State private var selectedTab = 0
     @State private var showingCertificates = false
     @State private var showingAppIds = false
     @State private var showingPairing = false
     @State private var showingSettings = false
     @State private var showingLogin = false
-    
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Background with "Liquid" refractions
+                // Background
                 Color(hex: "0f172a").ignoresSafeArea()
-                
-                // Refraction Streaks (Dynamic scaling for iPhone 16)
+
+                // Refraction Streaks
                 ZStack {
                     Capsule()
-                        .fill(LinearGradient(colors: [.blue.opacity(0.12), .purple.opacity(0.08), .clear], startPoint: .leading, endPoint: .trailing))
-                        .frame(width: geometry.size.width * 1.5, height: geometry.size.height * 0.15)
+                        .fill(
+                            LinearGradient(
+                                colors: [.blue.opacity(0.12), .purple.opacity(0.08), .clear],
+                                startPoint: .leading, endPoint: .trailing)
+                        )
+                        .frame(
+                            width: geometry.size.width * 1.5, height: geometry.size.height * 0.15
+                        )
                         .rotationEffect(.degrees(-35))
                         .blur(radius: 50)
                         .offset(x: -geometry.size.width * 0.2, y: geometry.size.height * 0.1)
-                    
+
                     Circle()
                         .fill(Color.blue.opacity(0.05))
                         .frame(width: geometry.size.width * 0.8)
@@ -33,7 +39,8 @@ struct MainView: View {
                         .offset(x: geometry.size.width * 0.3, y: -geometry.size.height * 0.2)
                 }
                 .ignoresSafeArea()
-                
+
+                // Main Content
                 VStack(spacing: 0) {
                     if selectedTab == 0 {
                         HomeView(
@@ -57,39 +64,36 @@ struct MainView: View {
                         ProfileSection(appState: appState, showingSettings: $showingSettings)
                             .transition(.opacity)
                     }
-                    
-                    Spacer(minLength: 120) // Space for floating tab bar
                 }
-                
-                // Floating Tab Bar (3 tabs only)
-                VStack {
-                    Spacer()
-                    HStack(spacing: 0) {
-                        ForEach(0..<3) { index in
-                            Button(action: {
-                                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                                    selectedTab = index
+                .safeAreaInset(edge: .bottom) {
+                    // Floating Tab Bar
+                    VStack {
+                        HStack(spacing: 0) {
+                            ForEach(0..<3) { index in
+                                Button(action: {
+                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                                        selectedTab = index
+                                    }
+                                }) {
+                                    TabItem(
+                                        icon: tabIcon(for: index),
+                                        label: tabLabel(for: index),
+                                        isActive: selectedTab == index
+                                    )
+                                    .frame(maxWidth: .infinity)
                                 }
-                            }) {
-                                TabItem(
-                                    icon: tabIcon(for: index),
-                                    label: tabLabel(for: index),
-                                    isActive: selectedTab == index
-                                )
-                                .frame(maxWidth: .infinity)
                             }
                         }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 14)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Capsule())
+                        .overlay(Capsule().stroke(.white.opacity(0.1), lineWidth: 1))
+                        .shadow(color: .black.opacity(0.4), radius: 20, y: 10)
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 8)
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 14)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Capsule())
-                    .overlay(Capsule().stroke(.white.opacity(0.1), lineWidth: 1))
-                    .shadow(color: .black.opacity(0.4), radius: 20, y: 10)
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, geometry.safeAreaInsets.bottom > 0 ? 0 : 20)
                 }
-                .padding(.bottom, 20)
             }
         }
         .sheet(isPresented: $showingCertificates) { CertificatesView() }
@@ -103,7 +107,7 @@ struct MainView: View {
                 .background(Color(hex: "0f172a"))
         }
     }
-    
+
     private func tabIcon(for index: Int) -> String {
         switch index {
         case 0: return "house.fill"
@@ -112,7 +116,7 @@ struct MainView: View {
         default: return "questionmark"
         }
     }
-    
+
     private func tabLabel(for index: Int) -> String {
         switch index {
         case 0: return "Home"
@@ -122,7 +126,6 @@ struct MainView: View {
         }
     }
 }
-
 struct HomeView: View {
     @ObservedObject var appState: AppState
     @ObservedObject var sideloadService: SideloadService
@@ -130,8 +133,12 @@ struct HomeView: View {
     @Binding var showingAppIds: Bool
     @Binding var showingPairing: Bool
     @Binding var showingSettings: Bool
+    @Binding var showingPairing: Bool
+    @Binding var showingSettings: Bool
     @Binding var showingLogin: Bool
-    
+
+    @State private var isImportingIPA = false
+
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 24) {
@@ -155,7 +162,7 @@ struct HomeView: View {
                     .shadow(color: .black.opacity(0.3), radius: 15)
                 }
                 .padding(.top, 20)
-                
+
                 // Account Section
                 SectionHeader(title: "Account")
                 GlassCard {
@@ -177,9 +184,9 @@ struct HomeView: View {
                                     .foregroundColor(.blue)
                                     .font(.title)
                             }
-                            
+
                             Divider().background(.white.opacity(0.1))
-                            
+
                             Button(action: { showingSettings = true }) {
                                 HStack {
                                     Text("Manage Account")
@@ -200,7 +207,7 @@ struct HomeView: View {
                                 .font(.caption)
                                 .foregroundColor(.gray)
                                 .multilineTextAlignment(.center)
-                            
+
                             Button(action: { showingLogin = true }) {
                                 Text("Sign In with Apple ID")
                                     .font(.subheadline.bold())
@@ -214,20 +221,24 @@ struct HomeView: View {
                         .padding(.vertical, 8)
                     }
                 }
-                
+
                 // Quick Actions
                 SectionHeader(title: "Management")
                 GlassCard {
                     VStack(spacing: 0) {
-                        ManagementRow(title: "Certificates", icon: "certificate") { showingCertificates = true }
+                        ManagementRow(title: "Certificates", icon: "certificate") {
+                            showingCertificates = true
+                        }
                         Divider().padding(.vertical, 8).background(.white.opacity(0.05))
-                        ManagementRow(title: "App IDs", icon: "square.stack.3d.up") { showingAppIds = true }
+                        ManagementRow(title: "App IDs", icon: "square.stack.3d.up") {
+                            showingAppIds = true
+                        }
                         Divider().padding(.vertical, 8).background(.white.opacity(0.05))
                         ManagementRow(title: "Devices", icon: "iphone") { showingPairing = true }
                     }
                     .padding(4)
                 }
-                
+
                 // Installers Section (Bottom)
                 SectionHeader(title: "Installers")
                 GlassCard {
@@ -238,43 +249,75 @@ struct HomeView: View {
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(LinearGradient(colors: [.cyan, .blue], startPoint: .leading, endPoint: .trailing))
+                                .background(
+                                    LinearGradient(
+                                        colors: [.cyan, .blue], startPoint: .leading,
+                                        endPoint: .trailing)
+                                )
                                 .cornerRadius(16)
                                 .shadow(color: .blue.opacity(0.4), radius: 10, x: 0, y: 5)
                         }
-                        
+
+                        Button(action: { isImportingIPA = true }) {
+                            Text("Install Custom IPA")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.white.opacity(0.1))
+                                .cornerRadius(16)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16).stroke(
+                                        .white.opacity(0.1), lineWidth: 1))
+                        }
+
                         HStack(spacing: 12) {
-                            InstallerSubButton(title: "Refresh") { }
-                            InstallerSubButton(title: "History") { }
+                            InstallerSubButton(title: "Refresh") {}
+                            InstallerSubButton(title: "History") {}
                         }
                     }
                     .padding(8)
                 }
-                
+                .fileImporter(
+                    isPresented: $isImportingIPA, allowedContentTypes: [.ipa],
+                    allowsMultipleSelection: false
+                ) { result in
+                    switch result {
+                    case .success(let urls):
+                        guard let url = urls.first else { return }
+                        sideloadService.installIPA(url: url)
+                    case .failure(let error):
+                        print("IPA Import failed: \(error.localizedDescription)")
+                    }
+                }
+
                 Spacer(minLength: 40)
             }
             .padding(.horizontal, 24)
         }
     }
 }
-
 struct ManagementSection: View {
     @Binding var showingCertificates: Bool
     @Binding var showingAppIds: Bool
     @Binding var showingPairing: Bool
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Management")
                 .font(.largeTitle.bold())
                 .foregroundColor(.white)
                 .padding(.top, 40)
-            
+
             GlassCard {
                 VStack(spacing: 0) {
-                    ManagementRow(title: "Certificates", icon: "certificate") { showingCertificates = true }
+                    ManagementRow(title: "Certificates", icon: "certificate") {
+                        showingCertificates = true
+                    }
                     Divider().padding(.vertical, 8).background(.white.opacity(0.05))
-                    ManagementRow(title: "App IDs", icon: "square.stack.3d.up") { showingAppIds = true }
+                    ManagementRow(title: "App IDs", icon: "square.stack.3d.up") {
+                        showingAppIds = true
+                    }
                     Divider().padding(.vertical, 8).background(.white.opacity(0.05))
                     ManagementRow(title: "Paired Devices", icon: "iphone") { showingPairing = true }
                 }
@@ -285,18 +328,17 @@ struct ManagementSection: View {
         .padding(.horizontal, 24)
     }
 }
-
 struct ProfileSection: View {
     @ObservedObject var appState: AppState
     @Binding var showingSettings: Bool
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Profile")
                 .font(.largeTitle.bold())
                 .foregroundColor(.white)
                 .padding(.top, 40)
-            
+
             GlassCard {
                 VStack(spacing: 20) {
                     HStack(spacing: 15) {
@@ -307,17 +349,22 @@ struct ProfileSection: View {
                         VStack(alignment: .leading) {
                             Text(appState.loggedInAs ?? "Guest User")
                                 .font(.title3.bold())
-                            Text(appState.loggedInAs != nil ? "Pro Account" : "Sign in to access features")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                            Text(
+                                appState.loggedInAs != nil
+                                    ? "Pro Account" : "Sign in to access features"
+                            )
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                         }
                     }
-                    
+
                     Divider().background(.white.opacity(0.1))
-                    
-                    ManagementRow(title: "Preferences", icon: "gearshape.fill") { showingSettings = true }
-                    ManagementRow(title: "Privacy & Security", icon: "lock.fill") { }
-                    
+
+                    ManagementRow(title: "Preferences", icon: "gearshape.fill") {
+                        showingSettings = true
+                    }
+                    ManagementRow(title: "Privacy & Security", icon: "lock.fill") {}
+
                     if appState.loggedInAs != nil {
                         Button(action: { appState.loggedInAs = nil }) {
                             Text("Log Out")
@@ -336,7 +383,6 @@ struct ProfileSection: View {
         .padding(.horizontal, 24)
     }
 }
-
 struct SectionHeader: View {
     let title: String
     var body: some View {
@@ -346,12 +392,11 @@ struct SectionHeader: View {
             .textCase(.uppercase)
     }
 }
-
 struct ManagementRow: View {
     let title: String
     let icon: String
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 12) {
@@ -374,7 +419,6 @@ struct ManagementRow: View {
         .padding(.vertical, 4)
     }
 }
-
 struct InstallerSubButton: View {
     let title: String
     let action: () -> Void
@@ -387,11 +431,11 @@ struct InstallerSubButton: View {
                 .padding(.vertical, 12)
                 .background(.white.opacity(0.05))
                 .cornerRadius(12)
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(.white.opacity(0.1), lineWidth: 1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12).stroke(.white.opacity(0.1), lineWidth: 1))
         }
     }
 }
-
 struct TabItem: View {
     let icon: String
     let label: String
@@ -407,19 +451,23 @@ struct TabItem: View {
         .foregroundColor(isActive ? .blue : .white.opacity(0.4))
     }
 }
-
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
         Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
+        let a: UInt64
+        let r: UInt64
+        let g: UInt64
+        let b: UInt64
         switch hex.count {
         case 3: (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
         case 6: (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
         case 8: (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
         default: (a, r, g, b) = (1, 1, 1, 0)
         }
-        self.init(.sRGB, red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255, opacity: Double(a) / 255)
+        self.init(
+            .sRGB, red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255,
+            opacity: Double(a) / 255)
     }
 }

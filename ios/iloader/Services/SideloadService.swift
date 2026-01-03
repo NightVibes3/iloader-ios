@@ -5,36 +5,12 @@ enum OperationType: String {
     case installSideStore = "install_sidestore"
     case installLiveContainer = "install_livecontainer"
     case customSideload = "custom_sideload"
+    case installCustomIPA = "install_custom_ipa"
 }
 
-enum StepState {
-    case pending
-    case inProgress
-    case completed
-    case failed(String)
-}
+// ... existing code ...
 
-struct OperationStep: Identifiable {
-    let id = UUID()
-    let title: String
-    var state: StepState = .pending
-}
-
-@MainActor
-class SideloadService: ObservableObject {
-    @Published var activeOperation: OperationType?
-    @Published var steps: [OperationStep] = []
-    @Published var isRunning = false
-    
-    weak var state: AppState?
-    
-    init(state: AppState) {
-        self.state = state
-    }
-    
-    static let shared = AppState.shared.sideloadService
-    
-    func startOperation(_ type: OperationType, params: [String: Any] = [:]) {
+    func installIPA(url: URL) {
         guard let state = state else { return }
         
         // Ensure user is logged in
@@ -43,40 +19,32 @@ class SideloadService: ObservableObject {
             return
         }
         
-        self.activeOperation = type
+        self.activeOperation = .installCustomIPA
         self.isRunning = true
         state.isLoading = true
+        state.statusMessage = "Preparing to install \(url.lastPathComponent)..."
         
-        // Initialize steps based on operation type
-        switch type {
-        case .installSideStore:
-            steps = [
-                OperationStep(title: "Contacting Apple Servers"),
-                OperationStep(title: "Fetching SideStore Payload"),
-                OperationStep(title: "Generating Signing Certificate"),
-                OperationStep(title: "Applying Entitlements"),
-                OperationStep(title: "Verifying Bundle Integrity")
-            ]
-        case .installLiveContainer:
-            steps = [
-                OperationStep(title: "Initializing LiveContainer"),
-                OperationStep(title: "Downloading Assets"),
-                OperationStep(title: "Signing Application Bundle"),
-                OperationStep(title: "Configuring App Group")
-            ]
-        case .customSideload:
-            steps = [
-                OperationStep(title: "Analyzing IPA File"),
-                OperationStep(title: "Authenticating Session"),
-                OperationStep(title: "Signing Binary"),
-                OperationStep(title: "Finalizing Package")
-            ]
-        }
+        // Ensure access if security scoped
+        let accessing = url.startAccessingSecurityScopedResource()
+        
+        steps = [
+            OperationStep(title: "Verifying IPA Integrity"),
+            OperationStep(title: "Unzipping Package"),
+            OperationStep(title: "Signing \(url.lastPathComponent)"),
+            OperationStep(title: "Uploading to Device"),
+            OperationStep(title: "Installing")
+        ]
+        
+        // We defer stopping access until after operation (simplified here as we can't easily defer across async steps in this structure without refactor, 
+        // so we'll stop strictly after the first step or assume copied to tmp)
+        // For this port, we'll just simulate the steps.
+        if accessing { url.stopAccessingSecurityScopedResource() } 
         
         executeNextStep(index: 0)
     }
-    
+
     private func executeNextStep(index: Int) {
+// ... existing code ...
         guard index < steps.count else {
             self.isRunning = false
             self.state?.isLoading = false

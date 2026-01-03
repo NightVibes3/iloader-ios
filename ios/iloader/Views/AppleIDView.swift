@@ -34,6 +34,63 @@ struct AppleIDView: View {
                 }
                 .padding(.top, 40)
 
+                // Saved Accounts List
+                if !accountService.accounts.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("SAVED ACCOUNTS")
+                            .font(.caption2.bold())
+                            .foregroundColor(.gray)
+                            .padding(.leading, 4)
+
+                        ForEach(accountService.accounts) { account in
+                            GlassCard {
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        Text(account.appleId)
+                                            .font(.subheadline.bold())
+                                            .foregroundColor(.white)
+                                        if appState.loggedInAs == account.appleId {
+                                            Text("Active")
+                                                .font(.caption2)
+                                                .foregroundColor(.green)
+                                        }
+                                    }
+
+                                    Spacer()
+
+                                    if appState.loggedInAs != account.appleId {
+                                        Button("Switch") {
+                                            accountService.switchAccount(to: account.appleId)
+                                        }
+                                        .font(.caption.bold())
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 5)
+                                        .background(Color.blue.opacity(0.3))
+                                        .cornerRadius(8)
+                                    }
+
+                                    Button(action: {
+                                        accountService.removeAccount(email: account.appleId)
+                                    }) {
+                                        Image(systemName: "trash")
+                                            .foregroundColor(.red.opacity(0.7))
+                                    }
+                                    .padding(.leading, 8)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Header for Form
+                if accountService.accounts.isEmpty || !appState.loggedInAs!.isEmpty {  // Show form if no accounts or explicitly adding (logic adjustment needed if "Adding" state exists, but for now show below list)
+                    Text("ADD ACCOUNT")
+                        .font(.caption2.bold())
+                        .foregroundColor(.gray)
+                        .padding(.top, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
                 // Form
                 VStack(spacing: 16) {
                     GlassCard {
@@ -99,7 +156,7 @@ struct AppleIDView: View {
                                 .tint(.white)
                                 .padding(.trailing, 8)
                         }
-                        Text(accountService.isLoggingIn ? "Signing In..." : "Sign In")
+                        Text(accountService.isLoggingIn ? "Verifying..." : "Add Account")
                             .font(.headline)
                     }
                     .foregroundColor(.white)
@@ -127,17 +184,20 @@ struct AppleIDView: View {
 
     private func performLogin() {
         Task {
-            let result = await accountService.login(
+            let result = await accountService.addAccount(
                 email: email,
                 password: password,
-                anisetteServer: appState.anisetteServer,
-                save: true
+                anisetteServer: appState.anisetteServer
             )
 
             switch result {
             case .success(let email):
-                appState.loggedInAs = email
-                dismiss()
+                // Account added and switched automatically
+                self.email = ""
+                self.password = ""
+            // Don't dismiss immediately so they can see it added, or dismiss?
+            // dismiss()
+            // Let's keep it open to show the list updated
             case .failure(let error):
                 errorMessage = error.localizedDescription
                 showingError = true

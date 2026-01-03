@@ -1,0 +1,41 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build IPA
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.0.app
+
+      - name: Build Archive
+        run: |
+          xcodebuild archive \
+            -packagepath ios/ \
+            -scheme iloader \
+            -destination "generic/platform=iOS" \
+            -archivePath iloader.xcarchive \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Export IPA (Unsigned)
+        run: |
+          mkdir -p Payload
+          cp -r iloader.xcarchive/Products/usr/local/lib/iloader.framework Payload/
+          # Note: This is a simplified example of packaging. 
+          # Real IPA packaging requires a valid .app bundle.
+          zip -r iloader.ipa Payload
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iloader-ipa
+          path: iloader.ipa

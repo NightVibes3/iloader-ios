@@ -1,54 +1,142 @@
 import SwiftUI
 
 struct AppleIDView: View {
-    @Binding var loggedInAs: String?
+    @ObservedObject var appState = AppState.shared
+    @StateObject var accountService = AccountService.shared
+    @Environment(\.dismiss) var dismiss
+    
+    @State private var email = ""
+    @State private var password = ""
+    @State private var showingError = false
+    @State private var errorMessage = ""
     
     var body: some View {
-        HStack(spacing: 16) {
-            // Profile Icon
-            ZStack {
-                Circle()
-                    .fill(Color.blue.gradient)
-                    .frame(width: 48, height: 48)
-                Image(systemName: "person.fill")
+        ZStack {
+            Color(hex: "0f172a").ignoresSafeArea()
+            
+            VStack(spacing: 24) {
+                // Header
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Apple ID")
+                            .font(.largeTitle.bold())
+                            .foregroundColor(.white)
+                        Text("Sign in to manage your certificates and sideload apps.")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                    }
+                    Spacer()
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.gray.opacity(0.5))
+                    }
+                }
+                .padding(.top, 40)
+                
+                // Form
+                VStack(spacing: 16) {
+                    GlassCard {
+                        VStack(spacing: 20) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("EMAIL")
+                                    .font(.caption2.bold())
+                                    .foregroundColor(.gray)
+                                TextField("appleid@example.com", text: $email)
+                                    .textFieldStyle(.plain)
+                                    .foregroundColor(.white)
+                                    .textContentType(.emailAddress)
+                                    .autocapitalization(.none)
+                            }
+                            
+                            Divider().background(.white.opacity(0.1))
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("PASSWORD")
+                                    .font(.caption2.bold())
+                                    .foregroundColor(.gray)
+                                SecureField("Required", text: $password)
+                                    .textFieldStyle(.plain)
+                                    .foregroundColor(.white)
+                                    .textContentType(.password)
+                            }
+                        }
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("ANISETTE SERVER")
+                            .font(.caption2.bold())
+                            .foregroundColor(.gray)
+                            .padding(.leading, 4)
+                        
+                        GlassCard {
+                            HStack {
+                                Text("Current:")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                                Spacer()
+                                Text(appState.anisetteServer)
+                                    .font(.subheadline.bold())
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                    }
+                }
+                
+                if showingError {
+                    Text(errorMessage)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                        .padding(.horizontal)
+                }
+                
+                Spacer()
+                
+                Button(action: performLogin) {
+                    HStack {
+                        if accountService.isLoggingIn {
+                            ProgressView()
+                                .tint(.white)
+                                .padding(.trailing, 8)
+                        }
+                        Text(accountService.isLoggingIn ? "Signing In..." : "Sign In")
+                            .font(.headline)
+                    }
                     .foregroundColor(.white)
-                    .font(.title3)
-            }
-            
-            VStack(alignment: .leading, spacing: 2) {
-                if let email = loggedInAs {
-                    Text(email)
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    Text("Developer Account")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                } else {
-                    Text("Not Signed In")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    Text("Enter Apple ID to start")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(email.isEmpty || password.isEmpty ? Color.gray.opacity(0.3) : Color.blue)
+                    .cornerRadius(16)
+                    .shadow(color: .blue.opacity(0.3), radius: 10, y: 5)
                 }
+                .disabled(email.isEmpty || password.isEmpty || accountService.isLoggingIn)
+                
+                Text("Your credentials are sent directly to Apple (or your chosen anisette server) and are never stored on iloader servers.")
+                    .font(.caption2)
+                    .foregroundColor(.gray.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
             }
+            .padding(24)
+        }
+    }
+    
+    private func performLogin() {
+        Task {
+            let result = await accountService.login(
+                email: email,
+                password: password,
+                anisetteServer: appState.anisetteServer,
+                save: true
+            )
             
-            Spacer()
-            
-            Button(action: {
-                if loggedInAs != nil {
-                    loggedInAs = nil
-                } else {
-                    // Logic to show login sheet
-                }
-            }) {
-                Text(loggedInAs != nil ? "Sign Out" : "Sign In")
-                    .font(.footnote).bold()
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(loggedInAs != nil ? Color.red.opacity(0.2) : Color.blue.opacity(0.2))
-                    .cornerRadius(8)
-                    .foregroundColor(loggedInAs != nil ? .red : .blue)
+            switch result {
+            case .success(let email):
+                appState.loggedInAs = email
+                dismiss()
+            case .failure(let error):
+                errorMessage = error.localizedDescription
+                showingError = true
             }
         }
     }

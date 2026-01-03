@@ -21,7 +21,6 @@
 		57B1B10A2D28300A00000000 /* AppleIDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B10A2D28300A00000001 /* AppleIDView.swift */; };
 		57B1B10B2D28300B00000000 /* CertificatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B10B2D28300B00000001 /* CertificatesView.swift */; };
 		57B1B10C2D28300C00000000 /* DeviceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B10C2D28300C00000001 /* DeviceView.swift */; };
-		57B1B10D2D28300D00000000 /* InstallerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B10D2D28300D00000001 /* InstallerView.swift */; };
 		57B1B10F2D28300F00000000 /* PairingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B10F2D28300F00000001 /* PairingView.swift */; };
 		57B1B1102D28301000000000 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B1102D28301000000001 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
@@ -42,7 +41,6 @@
 		57B1B10A2D28300A00000001 /* AppleIDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIDView.swift; sourceTree = "<group>"; };
 		57B1B10B2D28300B00000001 /* CertificatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CertificatesView.swift; sourceTree = "<group>"; };
 		57B1B10C2D28300C00000001 /* DeviceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceView.swift; sourceTree = "<group>"; };
-		57B1B10D2D28300D00000001 /* InstallerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstallerView.swift; sourceTree = "<group>"; };
 		57B1B10F2D28300F00000001 /* PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingView.swift; sourceTree = "<group>"; };
 		57B1B1102D28301000000001 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -122,7 +120,6 @@
 				57B1B10A2D28300A00000001 /* AppleIDView.swift */,
 				57B1B10B2D28300B00000001 /* CertificatesView.swift */,
 				57B1B10C2D28300C00000001 /* DeviceView.swift */,
-				57B1B10D2D28300D00000001 /* InstallerView.swift */,
 				57E707312D27E69C002AF7D5 /* MainView.swift */,
 				57B1B10F2D28300F00000001 /* PairingView.swift */,
 				57B1B1102D28301000000001 /* SettingsView.swift */,
@@ -212,7 +209,6 @@
 				57B1B10A2D28300A00000000 /* AppleIDView.swift in Sources */,
 				57B1B10B2D28300B00000000 /* CertificatesView.swift in Sources */,
 				57B1B10C2D28300C00000000 /* DeviceView.swift in Sources */,
-				57B1B10D2D28300D00000000 /* InstallerView.swift in Sources */,
 				57B1B10F2D28300F00000000 /* PairingView.swift in Sources */,
 				57B1B1102D28301000000000 /* SettingsView.swift in Sources */,
 			);

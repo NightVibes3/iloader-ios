@@ -2,6 +2,7 @@
 /// for device information (UDID, Serial Number, etc.)
 ///
 /// Note: Requires TrollStore or jailbreak for private API access
+
 import Foundation
 
 class MobileGestaltService {
@@ -50,8 +51,11 @@ class MobileGestaltService {
     }
 
     /// Load MobileGestalt framework dynamically
+    /// Note: This only works on TrollStore/jailbroken devices
+    /// On SideStore installs, isAvailable will be false
     private func loadMobileGestalt() {
         // Try to load MobileGestalt framework
+        // This will fail gracefully on SideStore installs
         let paths = [
             "/System/Library/PrivateFrameworks/MobileGestalt.framework/MobileGestalt",
             "/usr/lib/libMobileGestalt.dylib",
@@ -71,10 +75,14 @@ class MobileGestaltService {
                 }
 
                 if mgCopyAnswer != nil {
+                    print("[MobileGestalt] Successfully loaded - elevated permissions available")
                     return  // Successfully loaded
                 }
             }
         }
+
+        // Not available - this is expected on SideStore installs
+        print("[MobileGestalt] Not available - running in restricted mode (SideStore)")
     }
 
     // MARK: - Public API

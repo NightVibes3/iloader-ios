@@ -2,6 +2,8 @@
 /// Allows extraction of device pairing files for sideloading tools
 ///
 /// Note: Requires TrollStore or jailbreak to access /var/root/Library/Lockdown/
+/// On SideStore installs, hasAccess will be false
+
 import Foundation
 
 class LockdownService {
@@ -20,6 +22,7 @@ class LockdownService {
         case fileNotFound
         case invalidPairingData
         case exportFailed
+        case restrictedMode
 
         var errorDescription: String? {
             switch self {
@@ -28,6 +31,9 @@ class LockdownService {
             case .fileNotFound: return "Pairing file not found"
             case .invalidPairingData: return "Invalid pairing data format"
             case .exportFailed: return "Failed to export pairing file"
+            case .restrictedMode:
+                return
+                    "This feature requires TrollStore or jailbreak. SideStore installs cannot access system pairing files."
             }
         }
     }

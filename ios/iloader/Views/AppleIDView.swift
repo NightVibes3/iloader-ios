@@ -179,7 +179,110 @@ struct AppleIDView: View {
                 .padding(.horizontal, 20)
             }
             .padding(24)
+
+            // 2FA Overlay
+            if accountService.requires2FA {
+                Color.black.opacity(0.8)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+
+                VStack(spacing: 24) {
+                    Image(systemName: "lock.shield")
+                        .font(.system(size: 60))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.blue, .purple], startPoint: .topLeading,
+                                endPoint: .bottomTrailing)
+                        )
+
+                    Text("Two-Factor Authentication")
+                        .font(.title2.bold())
+                        .foregroundColor(.white)
+
+                    Text("Enter the 6-digit code sent to your trusted devices.")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+
+                    // 2FA Code Input
+                    HStack(spacing: 8) {
+                        ForEach(0..<6, id: \.self) { index in
+                            let codeArray = Array(accountService.tfaCode)
+                            let char = index < codeArray.count ? String(codeArray[index]) : ""
+
+                            Text(char)
+                                .font(.title.bold())
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 56)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(.white.opacity(0.1))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(.white.opacity(0.2), lineWidth: 1)
+                                )
+                        }
+                    }
+
+                    // Hidden text field for input
+                    TextField("", text: $accountService.tfaCode)
+                        .keyboardType(.numberPad)
+                        .frame(width: 1, height: 1)
+                        .opacity(0.01)
+                        .onChange(of: accountService.tfaCode) { newValue in
+                            // Limit to 6 digits
+                            if newValue.count > 6 {
+                                accountService.tfaCode = String(newValue.prefix(6))
+                            }
+                            // Auto-submit when 6 digits entered
+                            if newValue.count == 6 {
+                                submit2FA()
+                            }
+                        }
+
+                    if let error = accountService.loginError {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+
+                    Button(action: submit2FA) {
+                        HStack {
+                            if accountService.isLoggingIn {
+                                ProgressView()
+                                    .tint(.white)
+                                    .padding(.trailing, 8)
+                            }
+                            Text(accountService.isLoggingIn ? "Verifying..." : "Verify Code")
+                                .font(.headline)
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            accountService.tfaCode.count == 6 ? Color.blue : Color.gray.opacity(0.3)
+                        )
+                        .cornerRadius(16)
+                    }
+                    .disabled(accountService.tfaCode.count != 6 || accountService.isLoggingIn)
+
+                    Button("Cancel") {
+                        accountService.requires2FA = false
+                        accountService.tfaCode = ""
+                    }
+                    .foregroundColor(.gray)
+                }
+                .padding(32)
+                .background(
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(.ultraThinMaterial)
+                )
+                .padding(24)
+                .transition(.scale.combined(with: .opacity))
+            }
         }
+        .animation(.spring(response: 0.4), value: accountService.requires2FA)
     }
 
     private func performLogin() {
@@ -191,13 +294,24 @@ struct AppleIDView: View {
             )
 
             switch result {
-            case .success(let email):
-                // Account added and switched automatically
+            case .success(_):
                 self.email = ""
                 self.password = ""
-            // Don't dismiss immediately so they can see it added, or dismiss?
-            // dismiss()
-            // Let's keep it open to show the list updated
+            case .failure(let error):
+                errorMessage = error.localizedDescription
+                showingError = true
+            }
+        }
+    }
+
+    private func submit2FA() {
+        Task {
+            let result = await accountService.verify2FA(code: accountService.tfaCode)
+
+            switch result {
+            case .success(_):
+                accountService.tfaCode = ""
+                dismiss()
             case .failure(let error):
                 errorMessage = error.localizedDescription
                 showingError = true

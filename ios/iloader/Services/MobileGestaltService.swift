@@ -1,7 +1,9 @@
-/// MobileGestalt Service - Access Apple's private MobileGestalt framework
+/// MobileGestalt Service - Access Apple's MobileGestalt data
 /// for device information (UDID, Serial Number, etc.)
 ///
-/// Note: Requires TrollStore or jailbreak for private API access
+/// Supports multiple access methods:
+/// 1. Private framework (TrollStore/Jailbreak)
+/// 2. Shared cache plist (SideStore accessible!)
 
 import Foundation
 
@@ -30,8 +32,6 @@ class MobileGestaltService {
         case cpuArchitecture = "CPUArchitecture"
         case kernelBootArgs = "firmware-version"
         case activationState = "ActivationState"
-
-        // Custom composite key for all info
         case all = "AllGestaltInfo"
     }
 
@@ -44,18 +44,40 @@ class MobileGestaltService {
     private var mgGetBoolAnswer: MGGetBoolAnswerFunc?
     private var gestaltHandle: UnsafeMutableRawPointer?
 
+    // MARK: - Cache Plist Fallback
+
+    /// Path to MobileGestalt cache plist (accessible on SideStore!)
+    private let gestaltCachePath =
+        "/private/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist"
+
+    /// Cached data from plist
+    private var cachedGestaltData: [String: Any]?
+
     // MARK: - Initialization
 
     private init() {
         loadMobileGestalt()
     }
 
-    /// Load MobileGestalt framework dynamically
-    /// Note: This only works on TrollStore/jailbroken devices
-    /// On SideStore installs, isAvailable will be false
+    /// Load MobileGestalt - tries private framework first, then cache plist
     private func loadMobileGestalt() {
-        // Try to load MobileGestalt framework
-        // This will fail gracefully on SideStore installs
+        // Method 1: Try private framework (TrollStore/Jailbreak)
+        if tryLoadPrivateFramework() {
+            print("[MobileGestalt] Loaded via private framework (elevated permissions)")
+            return
+        }
+
+        // Method 2: Try cache plist (SideStore compatible!)
+        if tryLoadCachePlist() {
+            print("[MobileGestalt] Loaded via cache plist (SideStore compatible)")
+            return
+        }
+
+        print("[MobileGestalt] No access method available")
+    }
+
+    /// Try to load via private framework
+    private func tryLoadPrivateFramework() -> Bool {
         let paths = [
             "/System/Library/PrivateFrameworks/MobileGestalt.framework/MobileGestalt",
             "/usr/lib/libMobileGestalt.dylib",
@@ -65,7 +87,6 @@ class MobileGestaltService {
             if let handle = dlopen(path, RTLD_LAZY) {
                 gestaltHandle = handle
 
-                // Get function pointers
                 if let copyAnswerSym = dlsym(handle, "MGCopyAnswer") {
                     mgCopyAnswer = unsafeBitCast(copyAnswerSym, to: MGCopyAnswerFunc.self)
                 }
@@ -75,32 +96,71 @@ class MobileGestaltService {
                 }
 
                 if mgCopyAnswer != nil {
-                    print("[MobileGestalt] Successfully loaded - elevated permissions available")
-                    return  // Successfully loaded
+                    return true
                 }
             }
         }
+        return false
+    }
 
-        // Not available - this is expected on SideStore installs
-        print("[MobileGestalt] Not available - running in restricted mode (SideStore)")
+    /// Try to load from cache plist (SideStore accessible!)
+    private func tryLoadCachePlist() -> Bool {
+        let fileManager = FileManager.default
+
+        guard fileManager.fileExists(atPath: gestaltCachePath),
+            fileManager.isReadableFile(atPath: gestaltCachePath),
+            let data = fileManager.contents(atPath: gestaltCachePath)
+        else {
+            return false
+        }
+
+        do {
+            if let plist = try PropertyListSerialization.propertyList(
+                from: data, options: [], format: nil) as? [String: Any]
+            {
+                // The plist structure varies - look for CacheData or CacheExtra
+                if let cacheData = plist["CacheData"] as? [String: Any] {
+                    cachedGestaltData = cacheData
+                } else if let cacheExtra = plist["CacheExtra"] as? [String: Any] {
+                    cachedGestaltData = cacheExtra
+                } else {
+                    // Use the plist directly
+                    cachedGestaltData = plist
+                }
+                return cachedGestaltData != nil && !cachedGestaltData!.isEmpty
+            }
+        } catch {
+            print("[MobileGestalt] Failed to parse cache plist: \(error)")
+        }
+
+        return false
     }
 
     // MARK: - Public API
 
-    /// Check if MobileGestalt is available
+    /// Check if MobileGestalt data is available (either method)
     var isAvailable: Bool {
-        return mgCopyAnswer != nil
+        return mgCopyAnswer != nil || cachedGestaltData != nil
+    }
+
+    /// Check if using cache plist (SideStore mode)
+    var isUsingCachePlist: Bool {
+        return mgCopyAnswer == nil && cachedGestaltData != nil
     }
 
     /// Get a string value from MobileGestalt
     func getString(_ key: GestaltKey) -> String? {
-        guard let copyAnswer = mgCopyAnswer else { return nil }
+        // Try private framework first
+        if let copyAnswer = mgCopyAnswer {
+            let cfKey = key.rawValue as CFString
+            if let result = copyAnswer(cfKey), CFGetTypeID(result) == CFStringGetTypeID() {
+                return result as? String
+            }
+        }
 
-        let cfKey = key.rawValue as CFString
-        guard let result = copyAnswer(cfKey) else { return nil }
-
-        if CFGetTypeID(result) == CFStringGetTypeID() {
-            return result as? String
+        // Fall back to cache plist
+        if let cache = cachedGestaltData {
+            return cache[key.rawValue] as? String
         }
 
         return nil
@@ -108,31 +168,39 @@ class MobileGestaltService {
 
     /// Get a boolean value from MobileGestalt
     func getBool(_ key: GestaltKey) -> Bool? {
-        guard let getBoolAnswer = mgGetBoolAnswer else { return nil }
-        return getBoolAnswer(key.rawValue as CFString)
+        if let getBoolAnswer = mgGetBoolAnswer {
+            return getBoolAnswer(key.rawValue as CFString)
+        }
+
+        if let cache = cachedGestaltData {
+            return cache[key.rawValue] as? Bool
+        }
+
+        return nil
     }
 
     /// Get any value from MobileGestalt
     func getValue(_ key: GestaltKey) -> Any? {
-        guard let copyAnswer = mgCopyAnswer else { return nil }
-
-        let cfKey = key.rawValue as CFString
-        guard let result = copyAnswer(cfKey) else { return nil }
-
-        // Convert CFTypeRef to Swift type
-        if CFGetTypeID(result) == CFStringGetTypeID() {
-            return result as? String
-        } else if CFGetTypeID(result) == CFNumberGetTypeID() {
-            return result as? NSNumber
-        } else if CFGetTypeID(result) == CFBooleanGetTypeID() {
-            return CFBooleanGetValue(result as! CFBoolean)
-        } else if CFGetTypeID(result) == CFDataGetTypeID() {
-            return result as? Data
-        } else if CFGetTypeID(result) == CFDictionaryGetTypeID() {
-            return result as? [String: Any]
+        // Try private framework
+        if let copyAnswer = mgCopyAnswer {
+            let cfKey = key.rawValue as CFString
+            if let result = copyAnswer(cfKey) {
+                if CFGetTypeID(result) == CFStringGetTypeID() {
+                    return result as? String
+                } else if CFGetTypeID(result) == CFNumberGetTypeID() {
+                    return result as? NSNumber
+                } else if CFGetTypeID(result) == CFBooleanGetTypeID() {
+                    return CFBooleanGetValue(result as! CFBoolean)
+                } else if CFGetTypeID(result) == CFDataGetTypeID() {
+                    return result as? Data
+                } else if CFGetTypeID(result) == CFDictionaryGetTypeID() {
+                    return result as? [String: Any]
+                }
+            }
         }
 
-        return nil
+        // Fall back to cache
+        return cachedGestaltData?[key.rawValue]
     }
 
     /// Get device UDID
@@ -150,7 +218,7 @@ class MobileGestaltService {
         return getString(.deviceName)
     }
 
-    /// Get product type (e.g., "iPhone14,2")
+    /// Get product type (e.g., "iPhone16,1")
     var productType: String? {
         return getString(.productType)
     }
@@ -167,20 +235,17 @@ class MobileGestaltService {
 
     /// Get all available device info as dictionary
     func getAllDeviceInfo() -> [String: Any] {
-        var info: [String: Any] = [:]
+        // If using cache, return it all
+        if let cache = cachedGestaltData {
+            return cache
+        }
 
+        // Otherwise query each key
+        var info: [String: Any] = [:]
         let keys: [GestaltKey] = [
-            .uniqueDeviceID,
-            .serialNumber,
-            .deviceName,
-            .deviceClass,
-            .productType,
-            .productVersion,
-            .buildVersion,
-            .modelNumber,
-            .wifiAddress,
-            .bluetoothAddress,
-            .cpuArchitecture,
+            .uniqueDeviceID, .serialNumber, .deviceName, .deviceClass,
+            .productType, .productVersion, .buildVersion, .modelNumber,
+            .wifiAddress, .bluetoothAddress, .cpuArchitecture,
         ]
 
         for key in keys {

@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 
+@MainActor
 class AppState: ObservableObject {
     @Published var loggedInAs: String? = nil
     @Published var selectedDeviceName: String? = "My iPhone"

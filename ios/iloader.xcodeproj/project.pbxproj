@@ -23,6 +23,7 @@
 		57B1B10C2D28300C00000000 /* DeviceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B10C2D28300C00000001 /* DeviceView.swift */; };
 		57B1B10F2D28300F00000000 /* PairingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B10F2D28300F00000001 /* PairingView.swift */; };
 		57B1B1102D28301000000000 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B1102D28301000000001 /* SettingsView.swift */; };
+		57B1B10E2D28300E00000000 /* PairingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1B10E2D28300E00000001 /* PairingService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +44,7 @@
 		57B1B10C2D28300C00000001 /* DeviceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceView.swift; sourceTree = "<group>"; };
 		57B1B10F2D28300F00000001 /* PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingView.swift; sourceTree = "<group>"; };
 		57B1B1102D28301000000001 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		57B1B10E2D28300E00000001 /* PairingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +110,7 @@
 				57B1B1052D28300500000001 /* AccountService.swift */,
 				57B1B1062D28300600000001 /* AppIdService.swift */,
 				57B1B1072D28300700000001 /* CertificateService.swift */,
+				57B1B10E2D28300E00000001 /* PairingService.swift */,
 				57B1B1082D28300800000001 /* SideloadService.swift */,
 			);
 			path = Services;
@@ -210,6 +213,7 @@
 				57B1B10B2D28300B00000000 /* CertificatesView.swift in Sources */,
 				57B1B10C2D28300C00000000 /* DeviceView.swift in Sources */,
 				57B1B10F2D28300F00000000 /* PairingView.swift in Sources */,
+				57B1B10E2D28300E00000000 /* PairingService.swift in Sources */,
 				57B1B1102D28301000000000 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

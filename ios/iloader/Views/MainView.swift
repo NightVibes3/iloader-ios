@@ -1,5 +1,7 @@
 import SwiftUI
 
+import UniformTypeIdentifiers
+
 struct MainView: View {
     @ObservedObject var appState = AppState.shared
     @StateObject var sideloadService = SideloadService.shared
@@ -277,7 +279,8 @@ struct HomeView: View {
                     .padding(8)
                 }
                 .fileImporter(
-                    isPresented: $isImportingIPA, allowedContentTypes: [.ipa],
+                    isPresented: $isImportingIPA,
+                    allowedContentTypes: [UTType(filenameExtension: "ipa") ?? .data],
                     allowsMultipleSelection: false
                 ) { result in
                     switch result {

@@ -2,6 +2,8 @@ import Foundation
 
 import SwiftUI
 
+import UniformTypeIdentifiers
+
 struct PairingView: View {
     @ObservedObject var appState = AppState.shared
     @Environment(\.dismiss) var dismiss
@@ -22,6 +24,20 @@ struct PairingView: View {
                     .disabled(appState.isLoading)
             }
             .padding(.top)
+        }
+        .fileImporter(
+            isPresented: $isImportingPairing, allowedContentTypes: [.data],
+            allowsMultipleSelection: false
+        ) { result in
+            switch result {
+            case .success(let urls):
+                guard let url = urls.first else { return }
+                Task {
+                    try? await appState.pairingService.importPairingFile(url: url)
+                }
+            case .failure(let error):
+                print("Import failed: \(error.localizedDescription)")
+            }
         }
     }
 
@@ -112,18 +128,28 @@ struct PairingView: View {
         }
     }
 
+    var scanButton: some View {
+        VStack(spacing: 8) {
+            Button(action: {
+                Task { await appState.pairingService.scanForDevices() }
+            }) {
+                Text("Scan for Devices")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(12)
+                    .foregroundColor(.white)
             }
-        }
-        .fileImporter(isPresented: $isImportingPairing, allowedContentTypes: [.content], allowsMultipleSelection: false) { result in
-             switch result {
-             case .success(let urls):
-                 guard let url = urls.first else { return }
-                 Task {
-                     try? await appState.pairingService.importPairingFile(url: url)
-                 }
-             case .failure(let error):
-                 print("Import failed: \(error.localizedDescription)")
-             }
+
+            Button(action: {
+                isImportingPairing = true
+            }) {
+                Text("Import Pairing File")
+                    .font(.subheadline.bold())
+                    .foregroundColor(.blue)
+            }
+            .padding(.top, 4)
         }
     }
 }

@@ -16,11 +16,11 @@ jobs:
 
       - name: Build Archive
         run: |
+          cd ios
           xcodebuild archive \
-            -packagepath ios/ \
             -scheme iloader \
             -destination "generic/platform=iOS" \
-            -archivePath iloader.xcarchive \
+            -archivePath ../iloader.xcarchive \
             CODE_SIGNING_ALLOWED=NO
 
       - name: Export IPA (Unsigned)

@@ -1,21 +1,27 @@
 import Foundation
 
+// MARK: - App Data Models
+
 struct Certificate: Identifiable, Codable {
-    var id: String { certificateId }
+    let id: String // serialNumber or cert ID
     let name: String
-    let certificateId: String
     let serialNumber: String
-    let machineName: String
-    let machineId: String
+    let machineName: String?
+    let expirationDate: Date?
 }
 
 struct AppId: Identifiable, Codable {
-    var id: String { app_id_id }
-    let app_id_id: String
-    let identifier: String
+    let id: String // identifier
     let name: String
-    let features: [String: String]?
-    let expiration_date: String?
+    let identifier: String
+    let type: String // e.g., "iOS App"
+}
+
+struct Device: Identifiable, Codable {
+    let id: String // UDID
+    let name: String
+    let model: String?
+    let isPaired: Bool
 }
 
 struct AppIdsResponse: Codable {

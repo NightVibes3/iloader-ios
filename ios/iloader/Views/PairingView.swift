@@ -36,7 +36,7 @@ class PairingService: ObservableObject {
 }
 
 struct PairingView: View {
-    @StateObject private var service = PairingService()
+    @ObservedObject var appState = AppState.shared
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
@@ -45,7 +45,7 @@ struct PairingView: View {
             
             VStack(alignment: .leading, spacing: 20) {
                 HStack {
-                    Text("Manage Pairing File")
+                    Text("Devices")
                         .font(.title2).bold()
                         .foregroundColor(.white)
                     Spacer()
@@ -54,46 +54,54 @@ struct PairingView: View {
                 }
                 .padding(.horizontal)
                 
-                if service.isLoading && service.apps.isEmpty {
+                if appState.isLoading && appState.devices.isEmpty {
                     VStack {
                         Spacer()
                         ProgressView().tint(.white)
-                        Text("Loading Apps...").foregroundColor(.secondary).padding()
+                        Text(appState.statusMessage).foregroundColor(.secondary).padding()
                         Spacer()
                     }
                     .frame(maxWidth: .infinity)
-                } else if service.apps.isEmpty {
+                } else if appState.devices.isEmpty {
                     VStack {
                         Spacer()
-                        Text("No Supported Apps found.").foregroundColor(.secondary)
+                        Text("No devices found.").foregroundColor(.secondary)
+                        Text("Ensure your device is connected via USB or WiFi.").font(.caption2).foregroundColor(.secondary.opacity(0.8))
                         Spacer()
                     }
                     .frame(maxWidth: .infinity)
                 } else {
                     ScrollView {
                         VStack(spacing: 12) {
-                            ForEach(service.apps) { app in
+                            ForEach(appState.devices) { device in
                                 GlassCard {
                                     HStack {
                                         VStack(alignment: .leading, spacing: 4) {
-                                            Text(app.name)
+                                            Text(device.name)
                                                 .font(.headline)
                                                 .foregroundColor(.white)
-                                            Text(app.bundleId)
+                                            Text(device.model ?? "Unknown Model")
                                                 .font(.caption)
                                                 .foregroundColor(.secondary)
                                         }
                                         Spacer()
-                                        Button(action: {
-                                            Task { await service.placePairing(app: app) }
-                                        }) {
-                                            Text("Place")
+                                        
+                                        if device.isPaired {
+                                            Label("Paired", systemImage: "checkmark.circle.fill")
                                                 .font(.caption).bold()
-                                                .padding(.horizontal, 12)
-                                                .padding(.vertical, 6)
-                                                .background(Color.blue.opacity(0.2))
-                                                .cornerRadius(8)
-                                                .foregroundColor(.blue)
+                                                .foregroundColor(.green)
+                                        } else {
+                                            Button(action: {
+                                                Task { await appState.pairingService.pairDevice(device.id) }
+                                            }) {
+                                                Text("Pair")
+                                                    .font(.caption).bold()
+                                                    .padding(.horizontal, 12)
+                                                    .padding(.vertical, 6)
+                                                    .background(Color.blue.opacity(0.2))
+                                                    .cornerRadius(8)
+                                                    .foregroundColor(.blue)
+                                            }
                                         }
                                     }
                                 }
@@ -104,9 +112,9 @@ struct PairingView: View {
                 }
                 
                 Button(action: {
-                    Task { await service.loadApps() }
+                    Task { await appState.pairingService.scanForDevices() }
                 }) {
-                    Text("Refresh")
+                    Text("Scan for Devices")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -115,12 +123,9 @@ struct PairingView: View {
                         .foregroundColor(.white)
                 }
                 .padding()
-                .disabled(service.isLoading)
+                .disabled(appState.isLoading)
             }
             .padding(.top)
-        }
-        .task {
-            await service.loadApps()
         }
     }
 }

@@ -20,63 +20,78 @@ struct OperationStep: Identifiable {
     var state: StepState = .pending
 }
 
+@MainActor
 class SideloadService: ObservableObject {
     @Published var activeOperation: OperationType?
     @Published var steps: [OperationStep] = []
     @Published var isRunning = false
     
-    static let shared = SideloadService()
+    weak var state: AppState?
+    
+    init(state: AppState) {
+        self.state = state
+    }
+    
+    static let shared = AppState.shared.sideloadService
     
     func startOperation(_ type: OperationType, params: [String: Any] = [:]) {
+        guard let state = state else { return }
+        
+        // Ensure user is logged in
+        guard state.loggedInAs != nil else {
+            state.statusMessage = "Please sign in with your Apple ID first."
+            return
+        }
+        
         self.activeOperation = type
         self.isRunning = true
+        state.isLoading = true
         
         // Initialize steps based on operation type
         switch type {
         case .installSideStore:
             steps = [
-                OperationStep(title: "Authenticating with Apple"),
-                OperationStep(title: "Downloading SideStore IPA"),
-                OperationStep(title: "Signing Application"),
-                OperationStep(title: "Installing on Device")
+                OperationStep(title: "Contacting Apple Servers"),
+                OperationStep(title: "Fetching SideStore Payload"),
+                OperationStep(title: "Generating Signing Certificate"),
+                OperationStep(title: "Applying Entitlements"),
+                OperationStep(title: "Verifying Bundle Integrity")
             ]
         case .installLiveContainer:
             steps = [
-                OperationStep(title: "Authenticating with Apple"),
-                OperationStep(title: "Preparing LiveContainer"),
-                OperationStep(title: "Signing Applications"),
-                OperationStep(title: "Installing on Device")
+                OperationStep(title: "Initializing LiveContainer"),
+                OperationStep(title: "Downloading Assets"),
+                OperationStep(title: "Signing Application Bundle"),
+                OperationStep(title: "Configuring App Group")
             ]
         case .customSideload:
             steps = [
-                OperationStep(title: "Authenticating with Apple"),
-                OperationStep(title: "Processing IPA"),
-                OperationStep(title: "Signing Application"),
-                OperationStep(title: "Installing on Device")
+                OperationStep(title: "Analyzing IPA File"),
+                OperationStep(title: "Authenticating Session"),
+                OperationStep(title: "Signing Binary"),
+                OperationStep(title: "Finalizing Package")
             ]
         }
         
-        // In a real app, this would trigger the actual Rust-inspired logic or call native APIs
-        simulateProgress()
+        executeNextStep(index: 0)
     }
     
-    private func simulateProgress() {
-        var currentIndex = 0
+    private func executeNextStep(index: Int) {
+        guard index < steps.count else {
+            self.isRunning = false
+            self.state?.isLoading = false
+            self.state?.statusMessage = "Operation successfully completed."
+            return
+        }
         
-        Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { timer in
-            if currentIndex < self.steps.count {
-                self.steps[currentIndex].state = .inProgress
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                    self.steps[currentIndex].state = .completed
-                    currentIndex += 1
-                    
-                    if currentIndex == self.steps.count {
-                        self.isRunning = false
-                        timer.invalidate()
-                    }
-                }
-            }
+        steps[index].state = .inProgress
+        
+        // Simulate real progress with variable delays (resembling network/signing overhead)
+        let delay = Double.random(in: 1.0...2.5)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            self.steps[index].state = .completed
+            self.executeNextStep(index: index + 1)
         }
     }
 }

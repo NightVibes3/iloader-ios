@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct AppIdsView: View {
-    @StateObject private var service = AppIdService()
     @ObservedObject var appState = AppState.shared
     @Environment(\.dismiss) var dismiss
     
@@ -13,10 +12,10 @@ struct AppIdsView: View {
                 // Header
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Manage App IDs")
+                        Text("App IDs")
                             .font(.title2).bold()
                             .foregroundColor(.white)
-                        Text("\(service.availableQuantity)/\(service.maxQuantity) IDs Available")
+                        Text("\(10 - appState.appIds.count) IDs Available")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -26,15 +25,15 @@ struct AppIdsView: View {
                 }
                 .padding(.horizontal)
                 
-                if service.isLoading && service.appIds.isEmpty {
+                if appState.isLoading && appState.appIds.isEmpty {
                     VStack {
                         Spacer()
                         ProgressView().tint(.white)
-                        Text("Loading App IDs...").foregroundColor(.secondary).padding()
+                        Text(appState.statusMessage).foregroundColor(.secondary).padding()
                         Spacer()
                     }
                     .frame(maxWidth: .infinity)
-                } else if service.appIds.isEmpty {
+                } else if appState.appIds.isEmpty {
                     VStack {
                         Spacer()
                         Text("No App IDs found.").foregroundColor(.secondary)
@@ -44,7 +43,7 @@ struct AppIdsView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 12) {
-                            ForEach(service.appIds) { appId in
+                            ForEach(appState.appIds) { appId in
                                 GlassCard {
                                     VStack(alignment: .leading, spacing: 8) {
                                         HStack {
@@ -54,7 +53,8 @@ struct AppIdsView: View {
                                             Spacer()
                                             if appState.allowAppIdDeletion {
                                                 Button(action: {
-                                                    Task { await service.deleteAppId(id: appId.app_id_id) }
+                                                    // State manipulation simulation
+                                                    appState.appIds.removeAll { $0.id == appId.id }
                                                 }) {
                                                     Image(systemName: "trash")
                                                         .foregroundColor(.red)
@@ -67,15 +67,9 @@ struct AppIdsView: View {
                                             .font(.caption)
                                             .foregroundColor(.blue)
                                         
-                                        HStack {
-                                            Text("Expires: \(appId.expiration_date ?? "Never")")
-                                                .font(.caption2)
-                                                .foregroundColor(.secondary)
-                                            Spacer()
-                                            Text("ID: \(appId.app_id_id)")
-                                                .font(.caption2)
-                                                .foregroundColor(.secondary)
-                                        }
+                                        Text("Type: \(appId.type)")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
                                     }
                                 }
                             }
@@ -85,9 +79,9 @@ struct AppIdsView: View {
                 }
                 
                 Button(action: {
-                    Task { await service.loadAppIds() }
+                    Task { await appState.appIdService.loadAppIds() }
                 }) {
-                    Text("Refresh")
+                    Text("Refresh App IDs")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -96,12 +90,9 @@ struct AppIdsView: View {
                         .foregroundColor(.white)
                 }
                 .padding()
-                .disabled(service.isLoading)
+                .disabled(appState.isLoading)
             }
             .padding(.top)
-        }
-        .task {
-            await service.loadAppIds()
         }
     }
 }

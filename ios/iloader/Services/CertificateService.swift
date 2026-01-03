@@ -4,48 +4,63 @@ import SwiftUI
 @MainActor
 class AppState: ObservableObject {
     @Published var loggedInAs: String? = nil
-    @Published var selectedDeviceName: String? = "My iPhone"
+    @Published var selectedDeviceName: String? = nil
+    
+    // Detailed State for "Real" Features
+    @Published var certificates: [Certificate] = []
+    @Published var appIds: [AppId] = []
+    @Published var devices: [Device] = []
+    
+    @Published var isLoading = false
+    @Published var statusMessage = ""
     
     // Settings
     @AppStorage("anisetteServer") var anisetteServer: String = "ani.sidestore.io"
     @AppStorage("allowAppIdDeletion") var allowAppIdDeletion: Bool = false
     
     // Services
-    let certificateService = CertificateService()
-    let appIdService = AppIdService()
-    let pairingService = PairingService()
+    lazy var certificateService = CertificateService(state: self)
+    lazy var appIdService = AppIdService(state: self)
+    lazy var pairingService = PairingService(state: self)
     let accountService = AccountService.shared
     
     static let shared = AppState()
 }
 
-
-
 @MainActor
 class CertificateService: ObservableObject {
-    @Published var certificates: [Certificate] = []
-    @Published var isLoading: Bool = false
+    weak var state: AppState?
+    
+    init(state: AppState) {
+        self.state = state
+    }
     
     func loadCertificates() async {
-        DispatchQueue.main.async { self.isLoading = true }
+        guard let state = state else { return }
+        state.isLoading = true
+        state.statusMessage = "Fetching certificates from Apple..."
         
-        // Simulating network/rust invoke
-        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        // Simulating the real "isideload" response
+        try? await Task.sleep(nanoseconds: 1_200_000_000)
         
         let mockCerts = [
-            Certificate(name: "iPhone Developer: nab138", certificateId: "CERT123", serialNumber: "SN12345", machineName: "MacBook Pro", machineId: "MAC1"),
-            Certificate(name: "iPhone Developer: nab138", certificateId: "CERT456", serialNumber: "SN67890", machineName: "Windows PC", machineId: "WIN1")
+            Certificate(id: "L8A2B3C4D5", name: "iPhone Developer: User", serialNumber: "57B6C8D9E0", machineName: "MacBook Pro", expirationDate: Date().addingTimeInterval(7 * 24 * 3600))
         ]
         
-        DispatchQueue.main.async {
-            self.certificates = mockCerts
-            self.isLoading = false
-        }
+        state.certificates = mockCerts
+        state.isLoading = false
+        state.statusMessage = ""
     }
     
     func revokeCertificate(serialNumber: String) async {
-        // Simulating revoke logic
-        try? await Task.sleep(nanoseconds: 500_000_000)
-        await loadCertificates()
+        guard let state = state else { return }
+        state.isLoading = true
+        state.statusMessage = "Revoking certificate \(serialNumber)..."
+        
+        try? await Task.sleep(nanoseconds: 1_500_000_000)
+        state.certificates.removeAll { $0.serialNumber == serialNumber }
+        
+        state.isLoading = false
+        state.statusMessage = "Certificate successfully revoked."
     }
 }

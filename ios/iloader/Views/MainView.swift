@@ -53,9 +53,6 @@ struct MainView: View {
                             showingPairing: $showingPairing
                         )
                         .transition(.opacity)
-                    } else if selectedTab == 2 {
-                        InstallerSection(sideloadService: sideloadService)
-                            .transition(.opacity)
                     } else {
                         ProfileSection(appState: appState, showingSettings: $showingSettings)
                             .transition(.opacity)
@@ -64,11 +61,11 @@ struct MainView: View {
                     Spacer(minLength: 120) // Space for floating tab bar
                 }
                 
-                // Floating Tab Bar
+                // Floating Tab Bar (3 tabs only)
                 VStack {
                     Spacer()
                     HStack(spacing: 0) {
-                        ForEach(0..<4) { index in
+                        ForEach(0..<3) { index in
                             Button(action: {
                                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                                     selectedTab = index
@@ -100,15 +97,18 @@ struct MainView: View {
         .sheet(isPresented: $showingPairing) { PairingView() }
         .sheet(isPresented: $showingSettings) { SettingsView() }
         .sheet(isPresented: $showingLogin) { AppleIDView() }
-        .sheet(isPresented: $sideloadService.isRunning) { OperationView() }
+        .sheet(isPresented: $sideloadService.isRunning) {
+            OperationView(service: sideloadService)
+                .presentationDetents([.medium, .large])
+                .background(Color(hex: "0f172a"))
+        }
     }
     
     private func tabIcon(for index: Int) -> String {
         switch index {
         case 0: return "house.fill"
         case 1: return "square.stack.3d.up.fill"
-        case 2: return "arrow.down.circle.fill"
-        case 3: return "person.circle.fill"
+        case 2: return "person.circle.fill"
         default: return "questionmark"
         }
     }
@@ -117,8 +117,7 @@ struct MainView: View {
         switch index {
         case 0: return "Home"
         case 1: return "Manage"
-        case 2: return "Install"
-        case 3: return "Profile"
+        case 2: return "Profile"
         default: return ""
         }
     }
@@ -217,30 +216,42 @@ struct HomeView: View {
                 }
                 
                 // Quick Actions
-                SectionHeader(title: "Quick Actions")
+                SectionHeader(title: "Management")
                 GlassCard {
                     VStack(spacing: 0) {
-                        ManagementRow(title: "Import IPA", icon: "arrow.down.doc") {
-                            sideloadService.startOperation(.customSideload)
-                        }
+                        ManagementRow(title: "Certificates", icon: "certificate") { showingCertificates = true }
                         Divider().padding(.vertical, 8).background(.white.opacity(0.05))
-                        ManagementRow(title: "Pair Device", icon: "iphone.badge.plus") {
-                            showingPairing = true
-                        }
+                        ManagementRow(title: "App IDs", icon: "square.stack.3d.up") { showingAppIds = true }
+                        Divider().padding(.vertical, 8).background(.white.opacity(0.05))
+                        ManagementRow(title: "Devices", icon: "iphone") { showingPairing = true }
                     }
                     .padding(4)
                 }
                 
-                // Featured
-                SectionHeader(title: "Featured Installers")
-                HStack(spacing: 16) {
-                    FeaturedCard(title: "SideStore", icon: "s.circle.fill", color: .blue) {
-                        sideloadService.startOperation(.installSideStore)
+                // Installers Section (Bottom)
+                SectionHeader(title: "Installers")
+                GlassCard {
+                    VStack(spacing: 16) {
+                        Button(action: { sideloadService.startOperation(.installSideStore) }) {
+                            Text("Install All")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(LinearGradient(colors: [.cyan, .blue], startPoint: .leading, endPoint: .trailing))
+                                .cornerRadius(16)
+                                .shadow(color: .blue.opacity(0.4), radius: 10, x: 0, y: 5)
+                        }
+                        
+                        HStack(spacing: 12) {
+                            InstallerSubButton(title: "Refresh") { }
+                            InstallerSubButton(title: "History") { }
+                        }
                     }
-                    FeaturedCard(title: "LiveContainer", icon: "l.circle.fill", color: .purple) {
-                        sideloadService.startOperation(.installLiveContainer)
-                    }
+                    .padding(8)
                 }
+                
+                Spacer(minLength: 40)
             }
             .padding(.horizontal, 24)
         }
@@ -268,43 +279,6 @@ struct ManagementSection: View {
                     ManagementRow(title: "Paired Devices", icon: "iphone") { showingPairing = true }
                 }
                 .padding(4)
-            }
-            Spacer()
-        }
-        .padding(.horizontal, 24)
-    }
-}
-
-struct InstallerSection: View {
-    @ObservedObject var sideloadService: SideloadService
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Installers")
-                .font(.largeTitle.bold())
-                .foregroundColor(.white)
-                .padding(.top, 40)
-            
-            GlassCard {
-                VStack(spacing: 16) {
-                    Button(action: { sideloadService.startOperation(.installSideStore) }) {
-                        HStack {
-                            Image(systemName: "arrow.clockwise.circle.fill")
-                            Text("Refresh All Apps")
-                        }
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing))
-                        .cornerRadius(16)
-                    }
-                    
-                    HStack(spacing: 12) {
-                        InstallerSubButton(title: "Update Store") { }
-                        InstallerSubButton(title: "View History") { }
-                    }
-                }
             }
             Spacer()
         }
@@ -360,34 +334,6 @@ struct ProfileSection: View {
             Spacer()
         }
         .padding(.horizontal, 24)
-    }
-}
-
-struct FeaturedCard: View {
-    let title: String
-    let icon: String
-    let color: Color
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: 12) {
-                Image(systemName: icon)
-                    .font(.title)
-                    .foregroundColor(color)
-                Text(title)
-                    .font(.headline)
-                    .foregroundColor(.white)
-                Text("Tap to install")
-                    .font(.caption2)
-                    .foregroundColor(.gray)
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.ultraThinMaterial)
-            .cornerRadius(20)
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(.white.opacity(0.1), lineWidth: 1))
-        }
     }
 }
 

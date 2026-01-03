@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CertificatesView: View {
-    @StateObject private var service = CertificateService()
+    @ObservedObject var appState = AppState.shared
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
@@ -11,7 +11,7 @@ struct CertificatesView: View {
             VStack(alignment: .leading, spacing: 20) {
                 // Header
                 HStack {
-                    Text("Manage Certificates")
+                    Text("Certificates")
                         .font(.title2).bold()
                         .foregroundColor(.white)
                     Spacer()
@@ -20,29 +20,25 @@ struct CertificatesView: View {
                 }
                 .padding(.horizontal)
                 
-                if service.isLoading && service.certificates.isEmpty {
+                if appState.isLoading && appState.certificates.isEmpty {
                     VStack {
                         Spacer()
-                        ProgressView()
-                            .tint(.white)
-                        Text("Loading certificates...")
-                            .foregroundColor(.secondary)
-                            .padding()
+                        ProgressView().tint(.white)
+                        Text(appState.statusMessage).foregroundColor(.secondary).padding()
                         Spacer()
                     }
                     .frame(maxWidth: .infinity)
-                } else if service.certificates.isEmpty {
+                } else if appState.certificates.isEmpty {
                     VStack {
                         Spacer()
-                        Text("No certificates found.")
-                            .foregroundColor(.secondary)
+                        Text("No certificates found.").foregroundColor(.secondary)
                         Spacer()
                     }
                     .frame(maxWidth: .infinity)
                 } else {
                     ScrollView {
                         VStack(spacing: 16) {
-                            ForEach(service.certificates) { cert in
+                            ForEach(appState.certificates) { cert in
                                 GlassCard {
                                     VStack(alignment: .leading, spacing: 12) {
                                         HStack {
@@ -56,7 +52,7 @@ struct CertificatesView: View {
                                             }
                                             Spacer()
                                             Button(action: {
-                                                Task { await service.revokeCertificate(serialNumber: cert.serialNumber) }
+                                                Task { await appState.certificateService.revokeCertificate(serialNumber: cert.serialNumber) }
                                             }) {
                                                 Text("Revoke")
                                                     .font(.caption).bold()
@@ -70,24 +66,10 @@ struct CertificatesView: View {
                                         
                                         Divider().background(.white.opacity(0.1))
                                         
-                                        HStack {
-                                            VStack(alignment: .leading) {
-                                                Text("Machine Name")
-                                                    .font(.caption2)
-                                                    .foregroundColor(.secondary)
-                                                Text(cert.machineName)
-                                                    .font(.footnote)
-                                                    .foregroundColor(.white)
-                                            }
-                                            Spacer()
-                                            VStack(alignment: .trailing) {
-                                                Text("Machine ID")
-                                                    .font(.caption2)
-                                                    .foregroundColor(.secondary)
-                                                Text(cert.machineId)
-                                                    .font(.footnote)
-                                                    .foregroundColor(.white)
-                                            }
+                                        if let machine = cert.machineName {
+                                            Text("Recorded on: \(machine)")
+                                                .font(.caption2)
+                                                .foregroundColor(.secondary)
                                         }
                                     }
                                 }
@@ -98,26 +80,20 @@ struct CertificatesView: View {
                 }
                 
                 Button(action: {
-                    Task { await service.loadCertificates() }
+                    Task { await appState.certificateService.loadCertificates() }
                 }) {
-                    HStack {
-                        Image(systemName: "arrow.clockwise")
-                        Text("Refresh")
-                    }
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(12)
-                    .foregroundColor(.white)
+                    Text("Refresh Certificates")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .cornerRadius(12)
+                        .foregroundColor(.white)
                 }
                 .padding()
-                .disabled(service.isLoading)
+                .disabled(appState.isLoading)
             }
             .padding(.top)
-        }
-        .task {
-            await service.loadCertificates()
         }
     }
 }

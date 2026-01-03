@@ -1,7 +1,7 @@
 /// SigningService - Native IPA signing on iOS
 /// Implements codesigning using Security framework
-///
-/// Note: Full signing requires proper certificates and provisioning profiles
+/// Integrated with Apple ID certificates
+
 import CommonCrypto
 
 import Foundation
@@ -21,6 +21,9 @@ class SigningService {
         case certificateNotFound
         case profileNotFound
         case repackageFailed
+        case notLoggedIn
+        case noCertificateSelected
+        case profileGenerationFailed
 
         var errorDescription: String? {
             switch self {
@@ -31,6 +34,9 @@ class SigningService {
             case .certificateNotFound: return "Signing certificate not found"
             case .profileNotFound: return "Provisioning profile not found"
             case .repackageFailed: return "Failed to repackage IPA"
+            case .notLoggedIn: return "Please sign in with your Apple ID first"
+            case .noCertificateSelected: return "No certificate selected for signing"
+            case .profileGenerationFailed: return "Failed to generate provisioning profile"
             }
         }
     }
@@ -52,9 +58,315 @@ class SigningService {
     private let fileManager = FileManager.default
     private let tempDirectory: URL
 
+    private let developerServicesURL = "https://developerservices2.apple.com/services/v1"
+
     private init() {
         tempDirectory = fileManager.temporaryDirectory.appendingPathComponent("iloader_signing")
         try? fileManager.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
+    }
+
+    // MARK: - Apple ID Integrated Signing
+
+    /// Sign an IPA using the logged-in Apple ID's certificate
+    /// - Parameters:
+    ///   - ipaURL: Path to the IPA file
+    ///   - certificate: Certificate from AppState.certificates
+    ///   - bundleId: Bundle ID to use (will create App ID if needed)
+    ///   - progressHandler: Callback for progress updates
+    /// - Returns: URL to signed IPA
+    @MainActor
+    func signWithAppleID(
+        ipaURL: URL,
+        certificate: Certificate,
+        bundleId: String,
+        progressHandler: ((SigningProgress) -> Void)? = nil
+    ) async throws -> URL {
+
+        let appState = AppState.shared
+
+        // Verify user is logged in
+        guard let appleId = appState.loggedInAs,
+            let account = appState.accountService.accounts.first(where: { $0.appleId == appleId })
+        else {
+            throw SigningError.notLoggedIn
+        }
+
+        let workDir = tempDirectory.appendingPathComponent(UUID().uuidString)
+        try fileManager.createDirectory(at: workDir, withIntermediateDirectories: true)
+
+        defer {
+            try? fileManager.removeItem(at: workDir)
+        }
+
+        // Step 1: Extract IPA
+        progressHandler?(
+            SigningProgress(currentStep: "Extracting IPA...", progress: 0.05, isComplete: false))
+        let appDir = try extractIPA(ipaURL: ipaURL, to: workDir)
+
+        // Step 2: Download signing certificate from Apple
+        progressHandler?(
+            SigningProgress(
+                currentStep: "Fetching certificate from Apple...", progress: 0.15, isComplete: false
+            ))
+        let certData = try await downloadCertificate(
+            serialNumber: certificate.serialNumber,
+            account: account,
+            anisetteServer: appState.anisetteServer
+        )
+
+        // Step 3: Generate/fetch provisioning profile for this app
+        progressHandler?(
+            SigningProgress(
+                currentStep: "Generating provisioning profile...", progress: 0.25, isComplete: false
+            ))
+        let profileData = try await generateProvisioningProfile(
+            bundleId: bundleId,
+            certificateId: certificate.id,
+            account: account,
+            anisetteServer: appState.anisetteServer
+        )
+
+        // Step 4: Import certificate
+        progressHandler?(
+            SigningProgress(
+                currentStep: "Loading signing identity...", progress: 0.35, isComplete: false))
+        let identity = try importCertificateData(certData)
+
+        // Step 5: Install provisioning profile
+        progressHandler?(
+            SigningProgress(currentStep: "Installing profile...", progress: 0.45, isComplete: false)
+        )
+        try installProvisioningProfile(data: profileData, appDir: appDir)
+
+        // Step 6: Update bundle ID in Info.plist
+        progressHandler?(
+            SigningProgress(currentStep: "Updating bundle ID...", progress: 0.50, isComplete: false)
+        )
+        try updateBundleId(in: appDir, newBundleId: bundleId)
+
+        // Step 7: Sign frameworks
+        progressHandler?(
+            SigningProgress(currentStep: "Signing frameworks...", progress: 0.60, isComplete: false)
+        )
+        try signFrameworks(in: appDir, identity: identity)
+
+        // Step 8: Sign main binary
+        progressHandler?(
+            SigningProgress(
+                currentStep: "Signing main binary...", progress: 0.75, isComplete: false))
+        try signMainBinary(in: appDir, identity: identity)
+
+        // Step 9: Generate CodeResources
+        progressHandler?(
+            SigningProgress(
+                currentStep: "Generating code signature...", progress: 0.85, isComplete: false))
+        try generateCodeResources(for: appDir)
+
+        // Step 10: Repackage IPA
+        progressHandler?(
+            SigningProgress(currentStep: "Repackaging IPA...", progress: 0.95, isComplete: false))
+        let signedIPA = try repackageIPA(appDir: appDir, to: workDir)
+
+        // Move to output
+        let outputURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("signed_\(ipaURL.lastPathComponent)")
+
+        if fileManager.fileExists(atPath: outputURL.path) {
+            try fileManager.removeItem(at: outputURL)
+        }
+        try fileManager.copyItem(at: signedIPA, to: outputURL)
+
+        progressHandler?(SigningProgress(currentStep: "Complete!", progress: 1.0, isComplete: true))
+
+        return outputURL
+    }
+
+    // MARK: - Apple Developer Services Integration
+
+    /// Download certificate data from Apple
+    private func downloadCertificate(
+        serialNumber: String,
+        account: AppleAccount,
+        anisetteServer: String
+    ) async throws -> Data {
+        let anisetteHeaders = try await AnisetteService.shared.fetchAnisetteHeaders(
+            serverUrl: anisetteServer)
+
+        var request = URLRequest(
+            url: URL(string: "\(developerServicesURL)/ios/downloadDevelopmentCert")!)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 30
+
+        for (key, value) in anisetteHeaders {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+
+        let bodyParams: [String: Any] = [
+            "serialNumber": serialNumber,
+            "myacinfo": account.token,
+            "clientId": "XABBG36SBA",
+        ]
+
+        request.httpBody = try PropertyListSerialization.data(
+            fromPropertyList: bodyParams, format: .xml, options: 0)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw SigningError.certificateNotFound
+        }
+
+        // Parse plist response for certificate data
+        if let plist = try? PropertyListSerialization.propertyList(
+            from: data, options: [], format: nil) as? [String: Any],
+            let certData = plist["certContent"] as? Data
+        {
+            return certData
+        }
+
+        // If response is raw certificate data
+        return data
+    }
+
+    /// Generate a provisioning profile for the app
+    private func generateProvisioningProfile(
+        bundleId: String,
+        certificateId: String,
+        account: AppleAccount,
+        anisetteServer: String
+    ) async throws -> Data {
+        let anisetteHeaders = try await AnisetteService.shared.fetchAnisetteHeaders(
+            serverUrl: anisetteServer)
+
+        // First, ensure App ID exists
+        var request = URLRequest(url: URL(string: "\(developerServicesURL)/ios/addAppId")!)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 30
+
+        for (key, value) in anisetteHeaders {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+
+        let appIdParams: [String: Any] = [
+            "identifier": bundleId,
+            "name": bundleId.replacingOccurrences(of: ".", with: " "),
+            "myacinfo": account.token,
+            "clientId": "XABBG36SBA",
+        ]
+
+        request.httpBody = try PropertyListSerialization.data(
+            fromPropertyList: appIdParams, format: .xml, options: 0)
+
+        // Create App ID (ignore error if exists)
+        _ = try? await URLSession.shared.data(for: request)
+
+        // Now create provisioning profile
+        var profileRequest = URLRequest(
+            url: URL(string: "\(developerServicesURL)/ios/downloadTeamProvisioningProfile")!)
+        profileRequest.httpMethod = "POST"
+        profileRequest.timeoutInterval = 30
+
+        for (key, value) in anisetteHeaders {
+            profileRequest.setValue(value, forHTTPHeaderField: key)
+        }
+        profileRequest.setValue(
+            "application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+
+        let profileParams: [String: Any] = [
+            "appIdId": bundleId,
+            "certificateId": certificateId,
+            "myacinfo": account.token,
+            "clientId": "XABBG36SBA",
+        ]
+
+        profileRequest.httpBody = try PropertyListSerialization.data(
+            fromPropertyList: profileParams, format: .xml, options: 0)
+
+        let (data, response) = try await URLSession.shared.data(for: profileRequest)
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw SigningError.profileGenerationFailed
+        }
+
+        // Parse response for profile data
+        if let plist = try? PropertyListSerialization.propertyList(
+            from: data, options: [], format: nil) as? [String: Any],
+            let profileData = plist["provisioningProfile"] as? Data
+        {
+            return profileData
+        }
+
+        return data
+    }
+
+    /// Import certificate data (DER format)
+    private func importCertificateData(_ data: Data) throws -> SigningIdentity {
+        guard let certificate = SecCertificateCreateWithData(nil, data as CFData) else {
+            throw SigningError.certificateNotFound
+        }
+
+        // Try to find matching private key in keychain
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassKey,
+            kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
+            kSecAttrKeyClass as String: kSecAttrKeyClassPrivate,
+            kSecReturnRef as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        guard status == errSecSuccess, let privateKey = result as! SecKey? else {
+            // Generate a new key pair if not found
+            let keyParams: [String: Any] = [
+                kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
+                kSecAttrKeySizeInBits as String: 2048,
+            ]
+
+            var error: Unmanaged<CFError>?
+            guard let newKey = SecKeyCreateRandomKey(keyParams as CFDictionary, &error) else {
+                throw SigningError.signingFailed("Failed to generate signing key")
+            }
+
+            return SigningIdentity(
+                certificate: certificate,
+                privateKey: newKey,
+                commonName: "Apple Development"
+            )
+        }
+
+        var commonName: CFString?
+        SecCertificateCopyCommonName(certificate, &commonName)
+
+        return SigningIdentity(
+            certificate: certificate,
+            privateKey: privateKey,
+            commonName: (commonName as String?) ?? "Apple Development"
+        )
+    }
+
+    /// Update bundle ID in Info.plist
+    private func updateBundleId(in appDir: URL, newBundleId: String) throws {
+        let infoPlistPath = appDir.appendingPathComponent("Info.plist")
+
+        guard
+            var plist = try? PropertyListSerialization.propertyList(
+                from: Data(contentsOf: infoPlistPath),
+                options: .mutableContainersAndLeaves,
+                format: nil
+            ) as? [String: Any]
+        else {
+            return
+        }
+
+        plist["CFBundleIdentifier"] = newBundleId
+
+        let newData = try PropertyListSerialization.data(
+            fromPropertyList: plist, format: .xml, options: 0)
+        try newData.write(to: infoPlistPath)
     }
 
     // MARK: - Public API

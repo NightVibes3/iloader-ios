@@ -16,29 +16,77 @@ struct MainView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Background
-                Color(hex: "0f172a").ignoresSafeArea()
+                // Rich gradient background
+                LinearGradient(
+                    colors: [
+                        Color(hex: "0a0f1a"),
+                        Color(hex: "0f172a"),
+                        Color(hex: "1a1f3a"),
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
 
-                // Refraction Streaks
+                // Ambient glow orbs
                 ZStack {
+                    // Purple orb top-left
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [Color.purple.opacity(0.4), Color.clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 200
+                            )
+                        )
+                        .frame(width: 400, height: 400)
+                        .blur(radius: 80)
+                        .offset(x: -geometry.size.width * 0.3, y: -geometry.size.height * 0.1)
+
+                    // Cyan orb bottom-right
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [Color.cyan.opacity(0.3), Color.clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 180
+                            )
+                        )
+                        .frame(width: 350, height: 350)
+                        .blur(radius: 70)
+                        .offset(x: geometry.size.width * 0.4, y: geometry.size.height * 0.3)
+
+                    // Blue orb center
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [Color.blue.opacity(0.25), Color.clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 150
+                            )
+                        )
+                        .frame(width: 300, height: 300)
+                        .blur(radius: 60)
+                        .offset(x: geometry.size.width * 0.1, y: geometry.size.height * 0.15)
+
+                    // Accent streak
                     Capsule()
                         .fill(
                             LinearGradient(
-                                colors: [.blue.opacity(0.12), .purple.opacity(0.08), .clear],
-                                startPoint: .leading, endPoint: .trailing)
+                                colors: [
+                                    .purple.opacity(0.2), .blue.opacity(0.15), .cyan.opacity(0.1),
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
                         )
-                        .frame(
-                            width: geometry.size.width * 1.5, height: geometry.size.height * 0.15
-                        )
-                        .rotationEffect(.degrees(-35))
-                        .blur(radius: 50)
-                        .offset(x: -geometry.size.width * 0.2, y: geometry.size.height * 0.1)
-
-                    Circle()
-                        .fill(Color.blue.opacity(0.05))
-                        .frame(width: geometry.size.width * 0.8)
-                        .blur(radius: 100)
-                        .offset(x: geometry.size.width * 0.3, y: -geometry.size.height * 0.2)
+                        .frame(width: geometry.size.width * 1.8, height: 120)
+                        .rotationEffect(.degrees(-30))
+                        .blur(radius: 40)
+                        .offset(x: -geometry.size.width * 0.2, y: geometry.size.height * 0.2)
                 }
                 .ignoresSafeArea()
 

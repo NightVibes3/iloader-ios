@@ -32,7 +32,7 @@ struct MainView: View {
                         // Header
                         HStack(alignment: .top) {
                             Text("iloader")
-                                .font(.system(size: 64, weight: .extrabold))
+                                .font(.system(size: 64, weight: .black))
                                 .foregroundColor(.white)
                             Spacer()
                             // Profile Bubble

@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 class AppIdService: ObservableObject {
     @Published var appIds: [AppId] = []
     @Published var maxQuantity: Int = 10

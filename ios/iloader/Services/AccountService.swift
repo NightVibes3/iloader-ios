@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import Security
 
+@MainActor
 class AccountService: ObservableObject {
     @Published var isLoggingIn: Bool = false
     @Published var requires2FA: Bool = false

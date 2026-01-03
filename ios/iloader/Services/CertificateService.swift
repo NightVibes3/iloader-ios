@@ -20,6 +20,7 @@ class AppState: ObservableObject {
 
 
 
+@MainActor
 class CertificateService: ObservableObject {
     @Published var certificates: [Certificate] = []
     @Published var isLoading: Bool = false

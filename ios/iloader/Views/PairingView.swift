@@ -8,6 +8,7 @@ struct PairingAppInfo: Identifiable, Codable {
     let path: String
 }
 
+@MainActor
 class PairingService: ObservableObject {
     @Published var apps: [PairingAppInfo] = []
     @Published var isLoading: Bool = false

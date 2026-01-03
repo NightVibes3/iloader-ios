@@ -31,28 +31,62 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             AD_HOC_CODE_SIGNING_ALLOWED=YES
 
-      - name: Export IPA (Unsigned)
+      - name: Create App Bundle and IPA
         run: |
-          # Create Payload directory
+          # Create .app bundle structure
+          mkdir -p iloader.app
+
+          # Copy the executable
+          cp iloader.xcarchive/Products/usr/local/bin/iloader iloader.app/iloader
+
+          # Create minimal Info.plist for iOS app
+          cat > iloader.app/Info.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>iloader</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.nightvibes.iloader</string>
+              <key>CFBundleName</key>
+              <string>iloader</string>
+              <key>CFBundleDisplayName</key>
+              <string>iloader</string>
+              <key>CFBundleVersion</key>
+              <string>1</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>LSRequiresIPhoneOS</key>
+              <true/>
+              <key>UIDeviceFamily</key>
+              <array>
+                  <integer>1</integer>
+                  <integer>2</integer>
+              </array>
+              <key>UIRequiredDeviceCapabilities</key>
+              <array>
+                  <string>arm64</string>
+              </array>
+              <key>UISupportedInterfaceOrientations</key>
+              <array>
+                  <string>UIInterfaceOrientationPortrait</string>
+              </array>
+              <key>MinimumOSVersion</key>
+              <string>17.0</string>
+          </dict>
+          </plist>
+          EOF
+
+          # Create Payload directory and package IPA
           mkdir -p Payload
-
-          # Find the .app bundle
-          APP_PATH=$(find iloader.xcarchive -name "*.app" | head -n 1)
-
-          if [ -z "$APP_PATH" ]; then
-            echo "Error: No .app bundle found in archive!"
-            # Debug listing
-            find iloader.xcarchive
-            exit 1
-          fi
-
-          echo "Found app at: $APP_PATH"
-
-          # Copy to Payload
-          cp -r "$APP_PATH" Payload/
-
-          # Zip into IPA
+          cp -r iloader.app Payload/
           zip -r iloader.ipa Payload
+
+          echo "IPA created successfully!"
+          ls -la iloader.ipa
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

@@ -11,7 +11,7 @@ let package = Package(
         .executable(name: "iloader", targets: ["iloader"])
     ],
     targets: [
-        .target(
+        .executableTarget(
             name: "iloader",
             path: "iloader"
         )

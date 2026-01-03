@@ -112,33 +112,7 @@ struct PairingView: View {
         }
     }
 
-                }
             }
-        }
-    }
-
-    var scanButton: some View {
-        VStack(spacing: 8) {
-            Button(action: {
-                Task { await appState.pairingService.scanForDevices() }
-            }) {
-                Text("Scan for Devices")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(12)
-                    .foregroundColor(.white)
-            }
-            
-            Button(action: {
-                isImportingPairing = true
-            }) {
-                Text("Import Pairing File")
-                    .font(.subheadline.bold())
-                    .foregroundColor(.blue)
-            }
-            .padding(.top, 4)
         }
         .fileImporter(isPresented: $isImportingPairing, allowedContentTypes: [.content], allowsMultipleSelection: false) { result in
              switch result {

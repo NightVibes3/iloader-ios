@@ -133,8 +133,6 @@ struct HomeView: View {
     @Binding var showingAppIds: Bool
     @Binding var showingPairing: Bool
     @Binding var showingSettings: Bool
-    @Binding var showingPairing: Bool
-    @Binding var showingSettings: Bool
     @Binding var showingLogin: Bool
 
     @State private var isImportingIPA = false

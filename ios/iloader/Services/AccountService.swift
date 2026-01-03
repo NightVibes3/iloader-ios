@@ -13,8 +13,7 @@ class AccountService: ObservableObject {
 
     static let shared = AccountService()
 
-    override init() {
-        super.init()
+    init() {
         loadAccounts()
     }
 
